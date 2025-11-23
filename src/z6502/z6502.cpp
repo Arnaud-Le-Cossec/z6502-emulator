@@ -14,78 +14,141 @@
 
 #include "z6502.h"
 
+//*****************************************************************************
+// Private functions
+//*****************************************************************************
 
-void _op_ADC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+/**
+ * @brief Get operand based on addressing mode
+ * @param mem Pointer to memory space
+ * @param reg Pointer to register set
+ * @param mode Addressing mode
+ * @return Operand address or value
+ */
+uint16_t _get_operand(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    uint16_t lo = 0U;
+    uint16_t hi = 0U;
+    uint16_t operand = 0U;
     switch (mode)
     {
-    case IMM:
-        reg->accumulator += mem[reg->program_counter];
-        reg->program_counter++;
-        break;
-    case ZP:
-        {
-            uint8_t addr = mem[reg->program_counter];
-            reg->accumulator += mem[addr];
+        case IMP:
+            return 0;
+        case ACC:
+            return 0;
+        case IMM:
+            operand = mem[reg->program_counter];
             reg->program_counter++;
-        }
-        break;
-    case ZPX:
-        {
-            uint8_t addr = (mem[reg->program_counter] + reg->x) % 256;
-            reg->accumulator += mem[addr];
+            return operand;
+        case ZP:
+            operand = mem[reg->program_counter];
             reg->program_counter++;
-        }
-        break;
-    case ABS:
-        {
-            uint16_t lo = mem[reg->program_counter];
-            uint16_t hi = mem[reg->program_counter + 1];
-            uint16_t addr = (hi << 8) | lo;
-            reg->accumulator += mem[addr];
+            return operand;
+        case ZPX:
+            operand = (mem[reg->program_counter] + reg->x) % 256;
+            reg->program_counter++;
+            return operand;
+        case ZPY:
+            operand = (mem[reg->program_counter] + reg->y) % 256;
+            reg->program_counter++;
+            return operand;
+        case REL:
+            operand = mem[reg->program_counter];
+            reg->program_counter++;
+            return operand;
+        case ABS:
+            lo = mem[reg->program_counter];
+            hi = mem[reg->program_counter + 1];
+            operand = (hi << 8) | lo;
             reg->program_counter += 2;
-        }
-        break;
-    case ABX:
-        {
-            uint16_t lo = mem[reg->program_counter];
-            uint16_t hi = mem[reg->program_counter + 1];
-            uint16_t addr = ((hi << 8) | lo) + reg->x;
-            reg->accumulator += mem[addr];
+            return operand;
+        case ABX:
+            lo = mem[reg->program_counter];
+            hi = mem[reg->program_counter + 1];
+            operand = ((hi << 8) | lo) + reg->x;
             reg->program_counter += 2;
-        }
-        break;
-    case ABY:
-        {
-            uint16_t lo = mem[reg->program_counter];
-            uint16_t hi = mem[reg->program_counter + 1];
-            uint16_t addr = ((hi << 8) | lo) + reg->y;
-            reg->accumulator += mem[addr];
+            return operand;
+        case ABY:
+            lo = mem[reg->program_counter];
+            hi = mem[reg->program_counter + 1];
+            operand = ((hi << 8) | lo) + reg->y;
             reg->program_counter += 2;
-        }
-        break;
-    case INX:
-        {
-            uint8_t zp_addr = (mem[reg->program_counter] + reg->x) % 256;
-            uint16_t lo = mem[zp_addr];
-            uint16_t hi = mem[(zp_addr + 1) % 256];
-            uint16_t addr = (hi << 8) | lo;
-            reg->accumulator += mem[addr];
-            reg->program_counter++;
-        }
-        break;
-    case INY:
-        {
-            uint8_t zp_addr = mem[reg->program_counter];
-            uint16_t lo = mem[zp_addr];
-            uint16_t hi = mem[(zp_addr + 1) % 256];
-            uint16_t addr = ((hi << 8) | lo) + reg->y;
-            reg->accumulator += mem[addr];
-            reg->program_counter++;
-        }
-        break;
-    default:
-        break;
+            return operand;
+        case IND:
+            lo = mem[reg->program_counter];
+            hi = mem[reg->program_counter + 1];
+            operand = (hi << 8) | lo;
+            reg->program_counter += 2;
+            return mem[operand] | (mem[(operand + 1) % 65536] << 8);
+        case INX:
+            {
+                uint8_t zp_addr = (mem[reg->program_counter] + reg->x) % 256;
+                lo = mem[zp_addr];
+                hi = mem[(zp_addr + 1) % 256];
+                operand = (hi << 8) | lo;
+                reg->program_counter++;
+                return operand;
+            }
+        case INY:
+            {
+                uint8_t zp_addr = mem[reg->program_counter];
+                lo = mem[zp_addr];
+                hi = mem[(zp_addr + 1) % 256];
+                operand = ((hi << 8) | lo) + reg->y;
+                reg->program_counter++;
+                return operand;
+            }
+        default:
+            return 0;
     }
+}
+
+void _update_zero_flags(register_set_t* reg, uint8_t value){
+    /*Update zero flag*/
+    if(value == 0U){
+        reg->processor_status.zero = 1U;
+    }
+    else{
+        reg->processor_status.zero = 0U;
+    }
+}
+
+void _update_negative_flags(register_set_t* reg, uint8_t value){
+    /*Update negative flag*/
+    if((value & 0x80) != 0U){
+        reg->processor_status.negative = 1U;
+    }
+    else{
+        reg->processor_status.negative = 0U;
+    }
+}
+
+void _update_carry_flag(register_set_t* reg, uint16_t value){
+    /*Update carry flag*/
+    if(value > 0xFF){
+        reg->processor_status.carry = 1U;
+    }
+    else{
+        reg->processor_status.carry = 0U;
+    }
+}
+
+void _update_overflow_flag(register_set_t* reg, uint8_t a, uint8_t b, uint8_t result){
+    /*Update overflow flag*/
+    if(((a ^ result) & (b ^ result) & 0x80) != 0U){
+        reg->processor_status.overflow = 1U;
+    }
+    else{
+        reg->processor_status.overflow = 0U;
+    }
+}
+
+//*****************************************************************************
+// Instruction implementations
+//*****************************************************************************
+
+void _op_ADC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+
+    reg->accumulator += mem[_get_operand(mem, reg, mode)] + reg->processor_status.carry;
 }
 void _op_AND(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
 void _op_ASL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
@@ -135,13 +198,37 @@ void _op_SED(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
 void _op_SEI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
 void _op_STA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
 void _op_STX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_STY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TAX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TAY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TSX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TXA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TXS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
-void _op_TYA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){}
+void _op_STY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    mem[_get_operand(mem, reg, mode)] = reg->y;
+}
+void _op_TAX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->x = reg->accumulator;
+    _update_zero_flags(reg, reg->x);
+    _update_negative_flags(reg, reg->x);
+}
+void _op_TAY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->y = reg->accumulator;
+    _update_zero_flags(reg, reg->y);
+    _update_negative_flags(reg, reg->y);
+}
+void _op_TSX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->x = reg->stack_pointer;
+    _update_zero_flags(reg, reg->x);
+    _update_negative_flags(reg, reg->x);
+}
+void _op_TXA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->accumulator = reg->x;
+    _update_zero_flags(reg, reg->accumulator);
+    _update_negative_flags(reg, reg->accumulator);
+}
+void _op_TXS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->stack_pointer = reg->x;
+}
+void _op_TYA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+    reg->accumulator = reg->y;
+    _update_zero_flags(reg, reg->accumulator);
+    _update_negative_flags(reg, reg->accumulator);
+}
 
 
 Z6502::Z6502(uint8_t* memory_space)
