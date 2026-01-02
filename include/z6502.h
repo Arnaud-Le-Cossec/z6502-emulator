@@ -23,6 +23,10 @@
 #define FALSE 0U
 #define TRUE 1U
 
+#define Z6502_STACK_BASE_ADDRESS 0x0100U
+#define Z6502_RESET_VECTOR_ADDRESS 0xFFFCU
+#define Z6502_IRQ_VECTOR_ADDRESS 0xFFFEU
+
 /*Status indicator flags structure*/
 typedef struct
 {
