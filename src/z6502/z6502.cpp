@@ -623,7 +623,7 @@ Z6502::Z6502(uint8_t* memory_space)
 
 void Z6502::reset(void) {
     /*Init special purpose registers*/
-    _reg.program_counter = 0U;
+    _reg.program_counter = (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS+1U]<<8) | (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS]);
     _reg.stack_pointer = 0U;
     _reg.accumulator = 0U;
     _reg.x = 0U;
@@ -636,22 +636,45 @@ void Z6502::reset(void) {
     _reg.processor_status.break_cmd = 0U;
     _reg.processor_status.overflow = 0U;
     _reg.processor_status.negative = 0U;
+
+    _opcode = 0U;
 }
 
 int Z6502::step(void) {
     /*Read instruction*/
-    uint8_t opcode = _memory_space[_reg.program_counter];
+    _instr_addr = _reg.program_counter;
+    _opcode = _memory_space[_reg.program_counter];
     _reg.program_counter++;
 
     /*Execute instruction*/
-    if(instruction_set[opcode] != NULL){
-        instruction_set[opcode](_memory_space, &_reg, instruction_mode[opcode]);
+    if(instruction_set[_opcode] != NULL){
+        instruction_set[_opcode](_memory_space, &_reg, instruction_mode[_opcode]);
     }
     else{
         //Unhandled opcode
     }
 
     return 0;
+}
+
+register_set_t* Z6502::dump_register(void){
+    return &_reg;
+}
+
+const char* Z6502::get_instruction_mnemonic(void) {
+    return instruction_mnemonic[_opcode];
+}
+
+const char* Z6502::get_addressing_mode_str(void) {
+    return addressing_mode_str[instruction_mode[_opcode]];
+}
+
+uint8_t Z6502::get_instruction_opcode(void) {
+    return _opcode;
+}
+
+uint16_t Z6502::get_instruction_address(void) {
+    return _instr_addr;
 }
 
 Z6502::~Z6502()

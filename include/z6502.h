@@ -50,9 +50,6 @@ typedef struct
     flag_t processor_status;
 } register_set_t;
 
-/*Instruction set opcodes*/
-
-
 /*Addressing modes*/
 enum addressing_mode_t
 {
@@ -238,6 +235,46 @@ static const addressing_mode_t instruction_mode[256] = {
     REL, INY, ___, ___, ___, ZPX, ZPX, ___, IMP, ABY, ___, ___, ___, ABX, ABX, ___,
 };
 
+static const char* instruction_mnemonic[256] = {
+    /* 0x00 - 0x0F */
+    "BRK", "ORA", "---", "---", "---", "ORA", "ASL", "---", "PHP", "ORA", "ASL", "---", "---", "ORA", "ASL", "---",
+    /* 0x10 - 0x1F */
+    "BPL", "ORA", "---", "---", "---", "ORA", "ASL", "---", "CLC", "ORA", "---", "---", "---", "ORA", "ASL", "---",
+    /* 0x20 - 0x2F */
+    "JSR", "AND", "---", "---", "BIT", "AND", "ROL", "---", "PLP", "AND", "ROL", "---", "BIT", "AND", "ROL", "---",
+    /* 0x30 - 0x3F */
+    "BMI", "AND", "---", "---", "---", "AND", "ROL", "---", "SEC", "AND", "---", "---", "---", "AND", "ROL", "---",
+    /* 0x40 - 0x4F */
+    "RTI", "EOR", "---", "---", "---", "EOR", "LSR", "---", "PHA", "EOR", "LSR", "---", "JMP", "EOR", "LSR", "---",
+    /* 0x50 - 0x5F */
+    "BVC", "EOR", "---", "---", "---", "EOR", "LSR", "---", "CLI", "EOR", "---", "---", "---", "EOR", "LSR", "---",
+    /* 0x60 - 0x6F */
+    "RTS", "ADC", "---", "---", "---", "ADC", "ROR", "---", "PLA", "ADC", "ROR", "---", "JMP", "ADC", "ROR", "---",
+    /* 0x70 - 0x7F */
+    "BVC", "ADC", "---", "---", "---", "ADC", "ROR", "---", "SEI", "ADC", "---", "---", "---", "ADC", "ROR", "---",
+    /* 0x80 - 0x8F */
+    "---", "STA", "---", "---", "STY", "STA", "STX", "---", "DEY", "---", "TXA", "---", "STY", "STA", "STX", "---",
+    /* 0x90 - 0x9F */
+    "BCC", "STA", "---", "---", "STY", "STA", "STX", "---", "TYA", "STA", "TXS", "---", "---", "STA", "---", "---",
+    /* 0xA0 - 0xAF */
+    "LDY", "LDA", "LDX", "---", "LDY", "LDA", "LDX", "---", "TAY", "LDA", "TAX", "---", "LDY", "LDA", "LDX", "---",
+    /* 0xB0 - 0xBF */
+    "BCS", "LDA", "---", "---", "LDY", "LDA", "LDX", "---", "CLV", "LDA", "TSX", "---", "LDY", "LDA", "LDX", "---",
+    /* 0xC0 - 0xCF */
+    "CPY", "CMP", "---", "---", "CPY", "CMP", "DEC", "---", "INY", "CMP", "DEX", "---", "CPY", "CMP", "DEC", "---",
+    /* 0xD0 - 0xDF */
+    "BNE", "CMP", "---", "---", "---", "CMP", "DEC", "---", "CLD", "CMP", "---", "---", "---", "CMP", "DEC", "---",
+    /* 0xE0 - 0xEF */
+    "CPX", "SBC", "---", "---", "CPX", "SBC", "INC", "---", "INX", "SBC", "NOP", "---", "CPX", "SBC", "INC", "---",
+    /* 0xF0 - 0xFF */
+    "BEQ", "SBC", "---", "---", "---", "SBC", "INC", "---", "SED", "SBC", "---", "---", "---", "SBC", "INC", "---",
+};
+
+static const char* addressing_mode_str[] = {
+    "___", "IMP", "ACC", "IMM", "ZP", "ZPX", "ZPY", "REL",
+    "ABS", "ABX", "ABY", "IND", "INX", "INY"
+};
+
 class Z6502
 {
 private:
@@ -246,6 +283,10 @@ private:
     
     /*Memory*/
     uint8_t* _memory_space;
+
+    /*Instruction register*/
+    uint8_t _opcode;
+    uint16_t _instr_addr;
 public:
     /**
      * @brief Create Z6502 CPU
@@ -266,11 +307,34 @@ public:
     int step(void);
 
     /**
-     * @brief 
+     * @brief Dump CPU registers
+     * @returns Pointer to register set
      */
-    register_set_t* dump_register(register_set_t* register_set){
-        return &_reg;
-    }
+    register_set_t* dump_register(void);
+
+    /**
+     * @brief Get instruction mnemonic from opcode
+     * @returns Pointer to mnemonic string
+     */
+    const char* get_instruction_mnemonic(void);
+
+    /**
+     * @brief Get instruction mnemonic from opcode
+     * @returns Pointer to mnemonic string
+     */
+    const char* get_addressing_mode_str(void);
+
+    /**
+     * @brief Get instruction opcode from memory
+     * @returns Instruction opcode
+     */
+    uint8_t get_instruction_opcode(void);
+
+    /**
+     * @brief Get instruction opcode from memory
+     * @returns Current instruction address
+     */
+    uint16_t get_instruction_address(void);
 
     /**
      * @brief Z6502 destructor
