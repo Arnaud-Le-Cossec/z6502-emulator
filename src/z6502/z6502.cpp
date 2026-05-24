@@ -227,13 +227,26 @@ void _push_register_stack(uint8_t* mem, register_set_t* reg){
 void _op_ADC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     uint8_t tmp;
     uint16_t res;
+    uint8_t local_carry;
     if(mode == IMM){
         tmp = _get_operand(mem, reg, mode);
     }
     else{
         tmp = mem[_get_operand(mem, reg, mode)];
     }
-    res += tmp + reg->processor_status.carry;
+
+    if(reg->processor_status.decimal_mode){
+        /*Decimal mode*/
+        res = (reg->accumulator & 0x0F) + (tmp & 0x0F) + reg->processor_status.carry;
+        if (res>= 0x0A) res = ((res+0x06) & 0x0F) + 0x10;
+        res = (reg->accumulator & 0xF0) + (tmp & 0xF0) + res;
+        if (res >= 0xA0) res = res + 0x60;
+    }
+    else{
+        /*Binary mode*/
+        res = reg->accumulator + tmp + reg->processor_status.carry;
+    }
+
     _update_overflow_flag(reg, reg->accumulator, tmp, res);
     _update_carry_flag(reg, res);
     reg->accumulator = (uint8_t)(res % 256);
@@ -554,14 +567,26 @@ void _op_RTS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
 }
 void _op_SBC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     uint8_t tmp;
-    uint16_t res;
+    int16_t res;
     if(mode == IMM){
         tmp = _get_operand(mem, reg, mode);
     }
     else{
         tmp = mem[_get_operand(mem, reg, mode)];
     }
-    res = reg->accumulator - tmp - (1U - reg->processor_status.carry);
+
+    if(reg->processor_status.decimal_mode){
+        /*Decimal mode*/
+        res = (reg->accumulator & 0x0F) - (tmp & 0x0F) - (1U - reg->processor_status.carry);
+        if (res < 0x0) res = ((res-0x06) & 0x0F) - 0x10;
+        res = (reg->accumulator & 0xF0) - (tmp & 0xF0) + res;
+        if (res < 0x0) res = res - 0x60;
+    }
+    else{
+        /*Binary mode*/
+        res = reg->accumulator - tmp - (1U - reg->processor_status.carry);
+    }
+
     _update_overflow_flag(reg, reg->accumulator, ~tmp, res);
     _update_carry_flag(reg, res);
     reg->accumulator = (uint8_t)(res % 256);
