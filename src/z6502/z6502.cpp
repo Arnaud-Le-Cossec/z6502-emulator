@@ -328,6 +328,7 @@ void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _push_register_stack(mem, reg);
     reg->program_counter = Z6502_IRQ_VECTOR_ADDRESS;
     reg->processor_status.irq_disable = 1U;
+    reg->processor_status.break_cmd = 1U;
 }
 void _op_BVC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
@@ -649,7 +650,7 @@ Z6502::Z6502(uint8_t* memory_space)
 void Z6502::reset(void) {
     /*Init special purpose registers*/
     _reg.program_counter = (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS+1U]<<8) | (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS]);
-    _reg.stack_pointer = 0U;
+    _reg.stack_pointer = 0xFFU;
     _reg.accumulator = 0U;
     _reg.x = 0U;
     _reg.y = 0U;
