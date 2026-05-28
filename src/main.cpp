@@ -37,7 +37,7 @@ int main(int argc,char ** argv) {
                 break;
             case 'f':
                 clock_frequency = strtol(optarg, NULL, 10);
-                if(clock_frequency <= 0){
+                if(clock_frequency < 0){
                     fprintf(stderr, "Invalid clock frequency\n");
                     exit(EXIT_FAILURE);
                 }
@@ -99,7 +99,7 @@ int main(int argc,char ** argv) {
             getchar();
         }
         else{
-            usleep(1000000 / clock_frequency);
+            if(clock_frequency > 0) usleep(1000000 / clock_frequency);
         }
 
     }
