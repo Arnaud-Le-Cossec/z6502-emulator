@@ -34,7 +34,7 @@ typedef struct
     uint8_t zero;
     uint8_t irq_disable;
     uint8_t decimal_mode;
-    uint8_t break_cmd;
+    uint8_t break_flg;
     uint8_t overflow;
     uint8_t negative;
 } flag_t;

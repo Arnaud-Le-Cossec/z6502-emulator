@@ -20,17 +20,24 @@ int main(int argc,char ** argv) {
     int opt;
     int verbose_flag = 0;
     int json_flag = 0;
+    int stop_on_brk = 1; //Default: stop on BRK instruction
     int step_mode = 0;
     int clock_frequency = 1; //Default 1Hz
 
     /*Parse command line options*/
-    while ((opt = getopt(argc, argv, "vjsf:")) != -1) {
+    while ((opt = getopt(argc, argv, "vjbBsf:")) != -1) {
         switch (opt) {
             case 'v':
                 verbose_flag = 1;
                 break;
             case 'j':
                 json_flag = 1;
+                break;
+            case 'b':
+                stop_on_brk = 1;
+                break;
+            case 'B':
+                stop_on_brk = 0;
                 break;
             case 's':
                 step_mode = 1;
@@ -44,6 +51,12 @@ int main(int argc,char ** argv) {
                 break;
             default:
                 fprintf(stderr, "Usage: %s [-v] [-j] [-s] [-f frequency] ROM_file\n", argv[0]);
+                fprintf(stderr, "  -v : Verbose mode (dumps CPU state after each instruction)\n");
+                fprintf(stderr, "  -j : Output CPU state in JSON format (only with -v)\n");
+                fprintf(stderr, "  -b : Stop on BRK instruction (default)\n");
+                fprintf(stderr, "  -B : Continue execution on BRK instruction\n");
+                fprintf(stderr, "  -s : Step mode (waits for user input after each instruction)\n");
+                fprintf(stderr, "  -f frequency : Set clock frequency in Hz (default: 1Hz)\n");
                 exit(EXIT_FAILURE);
         }
     }
@@ -100,6 +113,12 @@ int main(int argc,char ** argv) {
         }
         else{
             if(clock_frequency > 0) usleep(1000000 / clock_frequency);
+        }
+
+        /*Check for BRK instruction*/
+        if(stop_on_brk && cpu.dump_register()->processor_status.break_flg == 1U){
+            printf("BRK flag set. Stopping execution.\n");
+            break;
         }
 
     }

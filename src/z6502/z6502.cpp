@@ -328,7 +328,7 @@ void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _push_register_stack(mem, reg);
     reg->program_counter = Z6502_IRQ_VECTOR_ADDRESS;
     reg->processor_status.irq_disable = 1U;
-    reg->processor_status.break_cmd = 1U;
+    reg->processor_status.break_flg = 1U;
 }
 void _op_BVC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
@@ -659,7 +659,7 @@ void Z6502::reset(void) {
     _reg.processor_status.zero = 0U;
     _reg.processor_status.irq_disable = 0U;
     _reg.processor_status.decimal_mode = 0U;
-    _reg.processor_status.break_cmd = 0U;
+    _reg.processor_status.break_flg = 0U;
     _reg.processor_status.overflow = 0U;
     _reg.processor_status.negative = 0U;
 

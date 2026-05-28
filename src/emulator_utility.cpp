@@ -49,7 +49,7 @@ void cpu_state_dump(Z6502* cpu, uint8_t json_flag){
            reg->processor_status.negative,
            reg->processor_status.overflow,
            1,
-           reg->processor_status.break_cmd,
+           reg->processor_status.break_flg,
            reg->processor_status.decimal_mode,
            reg->processor_status.irq_disable,
            reg->processor_status.zero,
