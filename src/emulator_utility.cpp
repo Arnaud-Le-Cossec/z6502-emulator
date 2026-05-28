@@ -34,9 +34,12 @@ void memory_dump(uint16_t start_address, uint8_t* memory_ptr, uint16_t length){
     printf("\n");
 }
 
-void cpu_state_dump(Z6502* cpu){
+void cpu_state_dump(Z6502* cpu, uint8_t json_flag){
     register_set_t* reg = cpu->dump_register();
-    printf("PC:%04X NEXT:%04X A:%02X X:%02X Y:%02X SP:%02X NV-BDIZC:%d%d%d%d%d%d%d%d opcode:%02X (%s %s)\n",
+    const char std_format_str[] = "PC:%04X NEXT:%04X A:%02X X:%02X Y:%02X SP:%02X NV-BDIZC:%d%d%d%d%d%d%d%d opcode:%02X (%s %s)\n";
+    const char json_format_str[] = "{ \"PC\": \"0x%04X\", \"NEXT\": \"0x%04X\", \"A\": \"0x%02X\", \"X\": \"0x%02X\", \"Y\": \"0x%02X\", \"SP\": \"0x%02X\", \"NV-BDIZC\": \"0b%d%d%d%d%d%d%d%d\", \"opcode\": \"0x%02X\", \"mnemonic\": \"%s\", \"addressing_mode\": \"%s\" }\n";
+
+    printf(json_flag?json_format_str:std_format_str,
            cpu->get_instruction_address(),
            reg->program_counter,
            reg->accumulator,

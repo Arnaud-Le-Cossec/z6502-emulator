@@ -19,14 +19,18 @@
 int main(int argc,char ** argv) {
     int opt;
     int verbose_flag = 0;
+    int json_flag = 0;
     int step_mode = 0;
     int clock_frequency = 1; //Default 1Hz
 
     /*Parse command line options*/
-    while ((opt = getopt(argc, argv, "vsf:")) != -1) {
+    while ((opt = getopt(argc, argv, "vjsf:")) != -1) {
         switch (opt) {
             case 'v':
                 verbose_flag = 1;
+                break;
+            case 'j':
+                json_flag = 1;
                 break;
             case 's':
                 step_mode = 1;
@@ -39,7 +43,7 @@ int main(int argc,char ** argv) {
                 }
                 break;
             default:
-                fprintf(stderr, "Usage: %s [-v] [-s] [-f frequency] ROM_file\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-v] [-j] [-s] [-f frequency] ROM_file\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -87,7 +91,7 @@ int main(int argc,char ** argv) {
         
 
         if(verbose_flag){
-            cpu_state_dump(&cpu);
+            cpu_state_dump(&cpu, (uint8_t)json_flag);
         }
 
         if(step_mode){

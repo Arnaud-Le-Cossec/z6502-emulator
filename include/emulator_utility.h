@@ -25,4 +25,4 @@ void memory_dump(uint16_t start_address, uint8_t* memory_ptr, uint16_t length);
  * @brief Dump CPU state to console
  * @param cpu Pointer to Z6502 CPU instance
  */
-void cpu_state_dump(Z6502* cpu);
+void cpu_state_dump(Z6502* cpu, uint8_t json_flag);
