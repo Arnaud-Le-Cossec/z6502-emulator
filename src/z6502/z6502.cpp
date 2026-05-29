@@ -678,6 +678,7 @@ int Z6502::step(void) {
     }
     else{
         //Unhandled opcode
+        return 1;
     }
 
     return 0;

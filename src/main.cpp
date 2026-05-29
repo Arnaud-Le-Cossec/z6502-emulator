@@ -100,7 +100,11 @@ int main(int argc,char ** argv) {
     /*Emulation loop*/
     while(1){
 
-        cpu.step();
+
+        if (cpu.step() != 0){
+            fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu.get_instruction_opcode(), cpu.get_instruction_address());
+            break;
+        }
         
 
         if(verbose_flag){
