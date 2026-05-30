@@ -103,7 +103,8 @@ int main(int argc,char ** argv) {
 
         if (cpu.step() != 0){
             fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu.get_instruction_opcode(), cpu.get_instruction_address());
-            break;
+            free(memory_space);
+            exit(EXIT_FAILURE);
         }
         
 
