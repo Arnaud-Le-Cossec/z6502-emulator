@@ -439,7 +439,7 @@ void _op_JMP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     reg->program_counter = _get_operand(mem, reg, mode);
 }
 void _op_JSR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
-    uint16_t tmp = (reg->program_counter + 2U) % 65536;
+    uint16_t tmp = (reg->program_counter + 1U) % 65536;
     _push_stack(mem, reg, (uint8_t)((tmp >> 8) & 0x00FF));
     _push_stack(mem, reg, (uint8_t)(tmp & 0x00FF));
     reg->program_counter = _get_operand(mem, reg, mode);
