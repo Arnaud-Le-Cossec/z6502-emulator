@@ -282,19 +282,19 @@ void _op_ASL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
 void _op_BCC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.carry == 0U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BCS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.carry == 1U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BEQ(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.zero == 1U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BIT(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
@@ -306,19 +306,19 @@ void _op_BIT(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
 void _op_BMI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.negative == 1U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BNE(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.zero == 0U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BPL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.negative == 0U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
@@ -333,13 +333,13 @@ void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
 void _op_BVC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.overflow == 0U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_BVS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.overflow == 1U){
-        reg->program_counter = (reg->program_counter + 2 + addr) % 65536;
+        reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
 void _op_CLC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
