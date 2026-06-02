@@ -146,7 +146,7 @@ static const instruction_t instruction_set[256] = {
     /* 0x60 - 0x6F */
     &_op_RTS,	&_op_ADC,   NULL,	    NULL,	    NULL,	    &_op_ADC,   &_op_ROR,   NULL,   &_op_PLA,	&_op_ADC,   &_op_ROR,   NULL,	&_op_JMP,   &_op_ADC,   &_op_ROR,   NULL,
     /* 0x70 - 0x7F */
-    &_op_BVC,   &_op_ADC,   NULL,	    NULL,	    NULL,	    &_op_ADC,   &_op_ROR,   NULL,   &_op_SEI,	&_op_ADC,   NULL,	    NULL,   NULL,	    &_op_ADC,   &_op_ROR,   NULL,
+    &_op_BVS,   &_op_ADC,   NULL,	    NULL,	    NULL,	    &_op_ADC,   &_op_ROR,   NULL,   &_op_SEI,	&_op_ADC,   NULL,	    NULL,   NULL,	    &_op_ADC,   &_op_ROR,   NULL,
     /* 0x80 - 0x8F */
     NULL,       &_op_STA,   NULL,	    NULL,	    &_op_STY,   &_op_STA,   &_op_STX,   NULL,   &_op_DEY,	NULL,	    &_op_TXA,   NULL,	&_op_STY,   &_op_STA,   &_op_STX,   NULL,
     /* 0x90 - 0x9F */
@@ -251,7 +251,7 @@ static const char* instruction_mnemonic[256] = {
     /* 0x60 - 0x6F */
     "RTS", "ADC", "---", "---", "---", "ADC", "ROR", "---", "PLA", "ADC", "ROR", "---", "JMP", "ADC", "ROR", "---",
     /* 0x70 - 0x7F */
-    "BVC", "ADC", "---", "---", "---", "ADC", "ROR", "---", "SEI", "ADC", "---", "---", "---", "ADC", "ROR", "---",
+    "BVS", "ADC", "---", "---", "---", "ADC", "ROR", "---", "SEI", "ADC", "---", "---", "---", "ADC", "ROR", "---",
     /* 0x80 - 0x8F */
     "---", "STA", "---", "---", "STY", "STA", "STX", "---", "DEY", "---", "TXA", "---", "STY", "STA", "STX", "---",
     /* 0x90 - 0x9F */
