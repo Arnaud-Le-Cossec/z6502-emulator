@@ -27,6 +27,7 @@ TESTS=(
     "stack"
     "jump"
     "branch"
+    "compare"
 )
 
 for TEST in "${TESTS[@]}"; do

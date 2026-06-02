@@ -18,5 +18,6 @@ acme --cpu 6502 -o misc/misc.bin misc/misc.asm &&\
 acme --cpu 6502 -o flags/flags.bin flags/flags.asm &&\
 acme --cpu 6502 -o stack/stack.bin stack/stack.asm &&\
 acme --cpu 6502 -o jump/jump.bin jump/jump.asm &&\
-acme --cpu 6502 -o branch/branch.bin branch/branch.asm
+acme --cpu 6502 -o branch/branch.bin branch/branch.asm &&\
+acme --cpu 6502 -o compare/compare.bin compare/compare.asm
 

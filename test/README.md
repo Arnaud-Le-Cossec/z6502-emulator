@@ -49,7 +49,7 @@ Below are the possible test operators:
     - `NV-BDIZC`: status register value (byte representation): `N`=negative flag, `V`=overflow flag, `-`=not used (always 1), `B`=break flag, `D`=decimal mode, `I`=irq flag, `Z`=zero flag, `C`=carry flag
     - `opcode`: current instuction opcode
     - `mnemonic`: mnemonic of current instuction (string)
-    - `addressing_mode`: addressing mode of current instuction (sting)
+    - `addressing_mode`: addressing mode of current instuction (sting): `IMP`=Implied, `ACC`=Accumulator, `IMM`=Immediate, `ZP`=Zero Page, `ZPX`=Zero Page,X, `ZPY`=Zero Page,Y, `REL`=Relative, `ABS`=Absolute, `ABX`=Absolute,X, `ABY`=Absolute,Y, `IND`=Indirect, `INX`=X-indexed, indirect - aka (Indirect,X), `INY`=Indirect, Y-indexed	- aka (Indirect),Y,
 
 Example:
 
