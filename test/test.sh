@@ -29,6 +29,7 @@ TESTS=(
     "branch"
     "compare"
     "bitwise"
+    "shift"
 )
 
 for TEST in "${TESTS[@]}"; do
