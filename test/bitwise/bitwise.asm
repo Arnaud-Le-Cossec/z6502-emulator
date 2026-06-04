@@ -22,7 +22,7 @@
 *= 0x0000
 test:
     NOP                         ;@expected{ "PC":"0x0000", "NEXT":"0x0001", "A":"0x00", "X":"0x00", "SP":"0xFF", "NV-BDIZC":"0b00100000" }
-    jmp cmp_test                ;@expected{ "PC":"0x0001", "NEXT":"0x0100" }
+    jmp and_test                ;@expected{ "PC":"0x0001", "NEXT":"0x0100" }
 
 ; Note : we will use the actual address instead of the label 
 ; to force the compiler to use the correct addressing mode 
@@ -36,7 +36,7 @@ indexed_table:
     !word zeropage_data, zeropage_data+1, zeropage_data+2
 
 *= 0x0100
-cmp_test:
+and_test:
     ; immediate mode
     LDA #%10101010              ;@expected{ "A":"0xAA" }
     AND #%01010101              ;@expected{ "A":"0x00", "NV-BDIZC":"0b00100010", "addressing_mode":"IMM" }
