@@ -24,6 +24,7 @@ fi
 TESTS=(
     "misc"
     "flags"
+    "access"
     "stack"
     "jump"
     "branch"
