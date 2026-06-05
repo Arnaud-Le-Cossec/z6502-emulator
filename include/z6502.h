@@ -230,7 +230,7 @@ static const addressing_mode_t instruction_mode[256] = {
     /* 0xD0 - 0xDF */
     REL, INY, ___, ___, ___, ZPX, ZPX, ___, IMP, ABY, ___, ___, ___, ABX, ABX, ___,
     /* 0xE0 - 0xEF */
-    IMM, INX, ___, ___, ZP,  ZP,  ZP,  ___, IMM, IMM, IMP, ___, ABS, ABS, ABS, ___,
+    IMM, INX, ___, ___, ZP,  ZP,  ZP,  ___, IMP, IMM, IMP, ___, ABS, ABS, ABS, ___,
     /* 0xF0 - 0xFF */
     REL, INY, ___, ___, ___, ZPX, ZPX, ___, IMP, ABY, ___, ___, ___, ABX, ABX, ___,
 };
