@@ -32,6 +32,8 @@ TESTS=(
     "bitwise"
     "shift"
     "transfer"
+    "arithmetic"
+    "arithmetic-decimal"
 )
 
 for TEST in "${TESTS[@]}"; do
