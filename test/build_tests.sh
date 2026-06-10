@@ -12,8 +12,6 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  MIT License for more details.    
 
-
-#acme --cpu 6502 -o op_adc/op_adc.bin op_adc/op_adc.asm &&\
 acme --cpu 6502 -o misc/misc.bin misc/misc.asm &&\
 acme --cpu 6502 -o flags/flags.bin flags/flags.asm &&\
 acme --cpu 6502 -o stack/stack.bin stack/stack.asm &&\

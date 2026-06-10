@@ -54,7 +54,7 @@ Below are the possible test operators:
 Example:
 
 ```asm
-; @test{ "name": "ADC instruction test" } 
+; @test{ "name": "JSR instruction test" } 
 jsr_absolute:
     JSR jsr_absolute_sub ;@expected{ "PC":"0x0200", "NEXT":"0x0300", "SP":"0xFD" } @+8
     LDA #$04            ;@+
