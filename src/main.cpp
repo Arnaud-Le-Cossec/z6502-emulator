@@ -77,7 +77,7 @@ int main(int argc,char ** argv) {
     }
 
     /*Load memory*/
-    if(memory_load(argv[optind], 0x0000U, memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES) == 0){
+    if(emu_memory_load(argv[optind], 0x0000U, memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES) == 0){
         fprintf(stderr, "[ ERROR  ] Could not load ROM file\n");
         free(memory_space);
         exit(EXIT_FAILURE);
@@ -86,16 +86,8 @@ int main(int argc,char ** argv) {
     /*Create components*/
     Z6502 cpu(memory_space);
 
-    memory_dump(0x0000U, memory_space, 256);
-
     /*Reset CPU*/
     cpu.reset();
-
-    //if(verbose_flag){
-    //    cpu_state_dump(&cpu);
-    // }
-
-
 
     /*Emulation loop*/
     while(1){
@@ -109,12 +101,13 @@ int main(int argc,char ** argv) {
         
 
         if(verbose_flag){
-            cpu_state_dump(&cpu, (uint8_t)json_flag);
+            emu_cpuState_dump(&cpu, (uint8_t)json_flag);
         }
 
         if(step_mode){
-            printf("Press ENTER to execute next instruction...\n");
-            getchar();
+            /*Start memory monitor. Blocks execution until user input*/
+            printf("Press [ENTER] to execute next instruction. [h] for memory monitor commands\n");
+            emu_memory_monitor(memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES);
         }
         else{
             if(clock_frequency > 0) usleep(1000000 / clock_frequency);

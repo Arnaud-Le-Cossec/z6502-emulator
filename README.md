@@ -44,10 +44,25 @@ Example command in **Step Mode** and **Verbose**:
 ./build/src/z6502_emulator -v -s TEST/mem_test/mem.bin TEST/mem_test/data.bin
 ```
 
+## Memory Monitor (Step mode)
+
+This emulator features a memory monitor. It allows user to inspect and modify data memory while the CPU is running.
+
+>**NOTE:** The memory monitor is only available in **step mode `-s`**.
+
+In **step mode**, at the end of each instruction, the program will prompt the user with `>>>`. From there you can type commands. If you hit `enter` without any commands, you will simply step to the next instruction.
+
+- `[newline]` Next instruction
+- `R address` **Read** one word from memory at *address* (**HEXADECIMAL**)
+- `R address size` **Read** *size* (**DECIMAL**) words from memory starting at *address* (**HEXADECIMAL**)
+- `W address=value` **Write** the word *value* (**HEXADECIMAL**) into memory at *address* (**HEXADECIMAL**)
+- `H` Show **help**
+
 ## Run tests
 
 ```bash
-./test/test.sh
+cd test
+./test.sh
 ```
 
 For more details, see [test instructions](./test/README.md)
