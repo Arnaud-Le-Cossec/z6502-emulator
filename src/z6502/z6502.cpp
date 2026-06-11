@@ -683,10 +683,6 @@ int z6502_step(z6502_cpu_t* cpu_s) {
     return 0;
 }
 
-//z6502_register_set_t* Z6502::dump_register(void){
-//    return &_reg;
-//}
-//
 const char* z6502_get_instruction_mnemonic(z6502_cpu_t* cpu_s) {
     return z6502_instruction_mnemonic[cpu_s->current_opcode];
 }
@@ -694,15 +690,3 @@ const char* z6502_get_instruction_mnemonic(z6502_cpu_t* cpu_s) {
 const char* z6502_get_addressing_mode_str(z6502_cpu_t* cpu_s) {
     return z6502_addressing_mode_str[z6502_instruction_mode[cpu_s->current_opcode]];
 }
-//
-//uint8_t Z6502::get_instruction_opcode(void) {
-//    return _opcode;
-//}
-//
-//uint16_t Z6502::get_instruction_address(void) {
-//    return _instr_addr;
-//}
-//
-//Z6502::~Z6502()
-//{
-//}

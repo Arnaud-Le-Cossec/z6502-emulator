@@ -177,12 +177,11 @@ void emu_memory_monitor(uint8_t* memory_ptr, size_t memory_size){
 }
 
 void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag){
-    //z6502_register_set_t* reg = cpu->dump_register();
     const char std_format_str[] = "PC:%04X NEXT:%04X A:%02X X:%02X Y:%02X SP:%02X NV-BDIZC:%d%d%d%d%d%d%d%d opcode:%02X (%s %s)\n";
     const char json_format_str[] = "{ \"PC\": \"0x%04X\", \"NEXT\": \"0x%04X\", \"A\": \"0x%02X\", \"X\": \"0x%02X\", \"Y\": \"0x%02X\", \"SP\": \"0x%02X\", \"NV-BDIZC\": \"0b%d%d%d%d%d%d%d%d\", \"opcode\": \"0x%02X\", \"mnemonic\": \"%s\", \"addressing_mode\": \"%s\" }\n";
 
     printf(json_flag?json_format_str:std_format_str,
-           cpu_s->current_instr_addr,/*get_instruction_address(),*/
+           cpu_s->current_instr_addr,
            cpu_s->reg.program_counter,
            cpu_s->reg.accumulator,
            cpu_s->reg.x,

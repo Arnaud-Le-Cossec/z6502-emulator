@@ -84,12 +84,10 @@ int main(int argc,char ** argv) {
     }
 
     /*Create components*/
-    //Z6502 cpu(memory_space);
     z6502_cpu_t cpu_s;
     z6502_init(&cpu_s, memory_space);
 
     /*Reset CPU*/
-    //cpu.reset();
     z6502_reset(&cpu_s);
 
     /*Emulation loop*/
