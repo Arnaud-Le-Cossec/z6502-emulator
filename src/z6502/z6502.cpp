@@ -25,7 +25,7 @@
  * @param mode Addressing mode
  * @return Operand address or value
  */
-uint16_t _get_operand(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+uint16_t _get_operand(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t lo = 0U;
     uint16_t hi = 0U;
     uint16_t operand = 0U;
@@ -116,7 +116,7 @@ uint16_t _get_operand(uint8_t* mem, register_set_t* reg, addressing_mode_t mode)
  * @param reg Pointer to register set
  * @param value Value to check
  */
-void _update_zero_flag(register_set_t* reg, uint8_t value){
+void _update_zero_flag(z6502_register_set_t* reg, uint8_t value){
     if(value == 0U){
         reg->processor_status.zero = 1U;
     }
@@ -130,7 +130,7 @@ void _update_zero_flag(register_set_t* reg, uint8_t value){
  * @param reg Pointer to register set
  * @param value Value to check
  */
-void _update_negative_flag(register_set_t* reg, uint8_t value){
+void _update_negative_flag(z6502_register_set_t* reg, uint8_t value){
     reg->processor_status.negative = (value >> 7) & 0x01;
 }
 
@@ -139,7 +139,7 @@ void _update_negative_flag(register_set_t* reg, uint8_t value){
  * @param reg Pointer to register set
  * @param value Value to check (uint16_t)
  */
-void _update_carry_flag(register_set_t* reg, uint16_t value){
+void _update_carry_flag(z6502_register_set_t* reg, uint16_t value){
     if(value > 0xFF){
         reg->processor_status.carry = 1U;
     }
@@ -155,7 +155,7 @@ void _update_carry_flag(register_set_t* reg, uint16_t value){
  * @param b Second operand
  * @param result Result of the operation
  */
-void _update_overflow_flag(register_set_t* reg, uint8_t a, uint8_t b, uint8_t result){
+void _update_overflow_flag(z6502_register_set_t* reg, uint8_t a, uint8_t b, uint8_t result){
     if(((a ^ result) & (b ^ result) & 0x80) != 0U){
         reg->processor_status.overflow = 1U;
     }
@@ -170,7 +170,7 @@ void _update_overflow_flag(register_set_t* reg, uint8_t a, uint8_t b, uint8_t re
  * @param reg Pointer to register set
  * @param value Pointer to store the pulled value
  */
-void _pull_stack(uint8_t* mem, register_set_t* reg, uint8_t* value){
+void _pull_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t* value){
     reg->stack_pointer = (reg->stack_pointer + 1U) % 256;
     *value = mem[0x0100 + reg->stack_pointer];
 }
@@ -181,7 +181,7 @@ void _pull_stack(uint8_t* mem, register_set_t* reg, uint8_t* value){
  * @param reg Pointer to register set
  * @param value Value to push onto the stack
  */
-void _push_stack(uint8_t* mem, register_set_t* reg, uint8_t value){
+void _push_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t value){
     mem[0x0100 + reg->stack_pointer] = value;
     reg->stack_pointer = (reg->stack_pointer - 1U) % 256;
 }
@@ -191,7 +191,7 @@ void _push_stack(uint8_t* mem, register_set_t* reg, uint8_t value){
  * @param mem Pointer to memory space
  * @param reg Pointer to register set
  */
-void _pull_register_stack(uint8_t* mem, register_set_t* reg){
+void _pull_register_stack(uint8_t* mem, z6502_register_set_t* reg){
     uint8_t tmp;
     reg->stack_pointer = (reg->stack_pointer + 1U) % 256;
     tmp = mem[0x0100 + reg->stack_pointer];
@@ -208,7 +208,7 @@ void _pull_register_stack(uint8_t* mem, register_set_t* reg){
  * @param mem Pointer to memory space
  * @param reg Pointer to register set
  */
-void _push_register_stack(uint8_t* mem, register_set_t* reg){
+void _push_register_stack(uint8_t* mem, z6502_register_set_t* reg){
     mem[0x0100 + reg->stack_pointer] = (uint8_t)(reg->processor_status.negative << 7 |
                                                  reg->processor_status.overflow << 6 |
                                                  1 << 5 |
@@ -224,7 +224,7 @@ void _push_register_stack(uint8_t* mem, register_set_t* reg){
 // Instruction implementations
 //*****************************************************************************
 
-void _op_ADC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_ADC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint8_t tmp;
     uint16_t res;
     uint8_t local_carry;
@@ -253,7 +253,7 @@ void _op_ADC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_AND(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_AND(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->accumulator &= (uint8_t)_get_operand(mem, reg, mode);
     }
@@ -263,7 +263,7 @@ void _op_AND(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_ASL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_ASL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t addr;
     if (mode == ACC) {
         reg->processor_status.carry = (reg->accumulator >> 7) & 0x01;
@@ -279,49 +279,49 @@ void _op_ASL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
         _update_negative_flag(reg, mem[addr]);
     }
 }
-void _op_BCC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BCC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.carry == 0U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BCS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BCS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.carry == 1U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BEQ(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BEQ(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.zero == 1U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BIT(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BIT(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint8_t tmp = mem[_get_operand(mem, reg, mode)];
     _update_zero_flag(reg, reg->accumulator & tmp);
     _update_negative_flag(reg, tmp);
     reg->processor_status.overflow = (tmp >> 6) & 0x01;
 }
-void _op_BMI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BMI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.negative == 1U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BNE(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BNE(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.zero == 0U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BPL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BPL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.negative == 0U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BRK(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t addr = (reg->program_counter + 2U) % 65536;
     _push_stack(mem, reg, (uint8_t)((addr >> 8) & 0x00FF));
     _push_stack(mem, reg, (uint8_t)(addr & 0x00FF));
@@ -330,31 +330,31 @@ void _op_BRK(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     reg->processor_status.irq_disable = 1U;
     reg->processor_status.break_flg = 1U;
 }
-void _op_BVC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BVC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.overflow == 0U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_BVS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_BVS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t addr = _get_operand(mem, reg, mode);
     if (reg->processor_status.overflow == 1U){
         reg->program_counter = (reg->program_counter + addr) % 65536;
     }
 }
-void _op_CLC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CLC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.carry = 0U;
 }
-void _op_CLD(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CLD(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.decimal_mode = 0U;
 }
-void _op_CLI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CLI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.irq_disable = 0U;
 }
-void _op_CLV(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CLV(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.overflow = 0U;
 }
-void _op_CMP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t tmp;
     if (mode == IMM){
         tmp = _get_operand(mem, reg, mode);
@@ -367,7 +367,7 @@ void _op_CMP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     reg->processor_status.zero = (tmp == 0)?1U:0U;
     reg->processor_status.negative = (tmp >> 7) & 0x01;
 }
-void _op_CPX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CPX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t tmp;
     if (mode == IMM){
         tmp = _get_operand(mem, reg, mode);
@@ -380,7 +380,7 @@ void _op_CPX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     reg->processor_status.zero = (tmp == 0)?1U:0U;
     reg->processor_status.negative = (tmp >> 7) & 0x01;
 }
-void _op_CPY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_CPY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     int8_t tmp;
     if (mode == IMM){
         tmp = _get_operand(mem, reg, mode);
@@ -393,23 +393,23 @@ void _op_CPY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     reg->processor_status.zero = (tmp == 0)?1U:0U;
     reg->processor_status.negative = (tmp >> 7) & 0x01;
 }
-void _op_DEC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_DEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t addr = _get_operand(mem, reg, mode);
     mem[addr] = (mem[addr] - 1U) % 256;
     _update_zero_flag(reg, mem[addr]);
     _update_negative_flag(reg, mem[addr]);
 }
-void _op_DEX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_DEX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->x = (reg->x - 1U) % 256;
     _update_zero_flag(reg, reg->x);
     _update_negative_flag(reg, reg->x);
 }
-void _op_DEY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_DEY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->y = (reg->y - 1U) % 256;
     _update_zero_flag(reg, reg->y);
     _update_negative_flag(reg, reg->y);
 }
-void _op_EOR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_EOR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->accumulator ^= (uint8_t)_get_operand(mem, reg, mode);
     }
@@ -419,32 +419,32 @@ void _op_EOR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_INC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_INC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t addr = _get_operand(mem, reg, mode);
     mem[addr] = (mem[addr] + 1U) % 256;
     _update_zero_flag(reg, mem[addr]);
     _update_negative_flag(reg, mem[addr]);
 }
-void _op_INX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_INX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->x = (reg->x + 1U) % 256;
     _update_zero_flag(reg, reg->x);
     _update_negative_flag(reg, reg->x);
 }
-void _op_INY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_INY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->y = (reg->y + 1U) % 256;
     _update_zero_flag(reg, reg->y);
     _update_negative_flag(reg, reg->y);
 }
-void _op_JMP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_JMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->program_counter = _get_operand(mem, reg, mode);
 }
-void _op_JSR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_JSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t tmp = (reg->program_counter + 1U) % 65536;
     _push_stack(mem, reg, (uint8_t)((tmp >> 8) & 0x00FF));
     _push_stack(mem, reg, (uint8_t)(tmp & 0x00FF));
     reg->program_counter = _get_operand(mem, reg, mode);
 }
-void _op_LDA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_LDA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->accumulator = _get_operand(mem, reg, mode);
     }
@@ -454,7 +454,7 @@ void _op_LDA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_LDX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_LDX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->x = _get_operand(mem, reg, mode);
     }
@@ -464,7 +464,7 @@ void _op_LDX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->x);
     _update_negative_flag(reg, reg->x);
 }
-void _op_LDY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_LDY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->y = _get_operand(mem, reg, mode);
     }
@@ -474,7 +474,7 @@ void _op_LDY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->y);
     _update_negative_flag(reg, reg->y);
 }
-void _op_LSR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_LSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint16_t addr;
     if (mode == ACC) {
         reg->processor_status.carry = reg->accumulator & 0x01;
@@ -490,10 +490,10 @@ void _op_LSR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
         _update_negative_flag(reg, mem[addr]);
     }
 }
-void _op_NOP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_NOP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     return;
 }
-void _op_ORA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_ORA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     if (mode == IMM) {
         reg->accumulator |= (uint8_t)_get_operand(mem, reg, mode);
     }
@@ -503,21 +503,21 @@ void _op_ORA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_PHA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_PHA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _push_stack(mem, reg, reg->accumulator);
 }
-void _op_PHP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_PHP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _push_register_stack(mem, reg);
 }
-void _op_PLA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_PLA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _pull_stack(mem,reg, &reg->accumulator);
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_PLP(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_PLP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _pull_register_stack(mem, reg);
 }
-void _op_ROL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_ROL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint8_t c;
     uint16_t addr;
     if (mode == ACC) {
@@ -536,7 +536,7 @@ void _op_ROL(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
         _update_negative_flag(reg, mem[addr]);
     }
 }
-void _op_ROR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_ROR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint8_t c;
     uint16_t addr;
     if (mode == ACC) {
@@ -556,17 +556,17 @@ void _op_ROR(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     }
     
 }
-void _op_RTI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_RTI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _pull_register_stack(mem, reg);
     _pull_stack(mem, reg, (uint8_t*)&reg->program_counter);
     _pull_stack(mem, reg, (uint8_t*)&reg->program_counter + 1);
 }
-void _op_RTS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_RTS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     _pull_stack(mem, reg, (uint8_t*)&reg->program_counter);
     _pull_stack(mem, reg, (uint8_t*)&reg->program_counter + 1);
     reg->program_counter++;
 }
-void _op_SBC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_SBC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     uint8_t tmp;
     int16_t res;
     if(mode == IMM){
@@ -594,48 +594,48 @@ void _op_SBC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_SEC(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_SEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.carry = 1U;
 }
-void _op_SED(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_SED(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.decimal_mode = 1U;
 }
-void _op_SEI(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_SEI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->processor_status.irq_disable = 1U;
 }
-void _op_STA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_STA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     mem[_get_operand(mem, reg, mode)] = reg->accumulator;
 }
-void _op_STX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_STX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     mem[_get_operand(mem, reg, mode)] = reg->x;
 }
-void _op_STY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_STY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     mem[_get_operand(mem, reg, mode)] = reg->y;
 }
-void _op_TAX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TAX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->x = reg->accumulator;
     _update_zero_flag(reg, reg->x);
     _update_negative_flag(reg, reg->x);
 }
-void _op_TAY(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TAY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->y = reg->accumulator;
     _update_zero_flag(reg, reg->y);
     _update_negative_flag(reg, reg->y);
 }
-void _op_TSX(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TSX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->x = reg->stack_pointer;
     _update_zero_flag(reg, reg->x);
     _update_negative_flag(reg, reg->x);
 }
-void _op_TXA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TXA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->accumulator = reg->x;
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
 }
-void _op_TXS(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TXS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->stack_pointer = reg->x;
 }
-void _op_TYA(uint8_t* mem, register_set_t* reg, addressing_mode_t mode){
+void z6502_op_TYA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
     reg->accumulator = reg->y;
     _update_zero_flag(reg, reg->accumulator);
     _update_negative_flag(reg, reg->accumulator);
@@ -673,8 +673,8 @@ int Z6502::step(void) {
     _reg.program_counter++;
 
     /*Execute instruction*/
-    if(instruction_set[_opcode] != NULL){
-        instruction_set[_opcode](_memory_space, &_reg, instruction_mode[_opcode]);
+    if(z6502_instruction_set[_opcode] != NULL){
+        z6502_instruction_set[_opcode](_memory_space, &_reg, z6502_instruction_mode[_opcode]);
     }
     else{
         //Unhandled opcode
@@ -684,16 +684,16 @@ int Z6502::step(void) {
     return 0;
 }
 
-register_set_t* Z6502::dump_register(void){
+z6502_register_set_t* Z6502::dump_register(void){
     return &_reg;
 }
 
 const char* Z6502::get_instruction_mnemonic(void) {
-    return instruction_mnemonic[_opcode];
+    return z6502_instruction_mnemonic[_opcode];
 }
 
 const char* Z6502::get_addressing_mode_str(void) {
-    return addressing_mode_str[instruction_mode[_opcode]];
+    return z6502_addressing_mode_str[z6502_instruction_mode[_opcode]];
 }
 
 uint8_t Z6502::get_instruction_opcode(void) {
