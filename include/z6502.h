@@ -50,6 +50,20 @@ typedef struct
     z6502_flag_t processor_status;
 } z6502_register_set_t;
 
+/*CPU structure*/
+typedef struct
+{
+    /*Registers*/
+    z6502_register_set_t reg;
+    
+    /*Memory*/
+    uint8_t* memory_ptr;
+
+    /*Instruction register*/
+    uint8_t current_opcode;
+    uint16_t current_instr_addr;
+} z6502_cpu_t;
+
 /*Addressing modes*/
 enum z6502_addressing_mode_t
 {
@@ -275,71 +289,99 @@ static const char* z6502_addressing_mode_str[] = {
     "ABS", "ABX", "ABY", "IND", "INX", "INY"
 };
 
-class Z6502
-{
-private:
-    /*Registers*/
-    z6502_register_set_t _reg;
-    
-    /*Memory*/
-    uint8_t* _memory_space;
 
-    /*Instruction register*/
-    uint8_t _opcode;
-    uint16_t _instr_addr;
-public:
-    /**
-     * @brief Create Z6502 CPU
-     * @param memory_space pointer to memory space
-     * @param io_space pointer to io space
-     */
-    Z6502(uint8_t* memory_space);
+/*CPU workers prototypes*/
 
-    /**
-     * @brief Reset CPU register
-     */
-    void reset(void);
+/**
+ * @brief Init CPU
+ * @param cpu_s CPU structure pointer
+ * @param memory_ptr memory pointer
+ */
+void z6502_init(z6502_cpu_t* cpu_s, uint8_t* memory_ptr);
 
-    /**
-     * @brief execute one instruction from memory at program counter
-     * @returns number of clock cycles spent
-     */
-    int step(void);
+/**
+ * @brief Reset CPU registers
+ * @param cpu_s CPU structure pointer
+ */
+void z6502_reset(z6502_cpu_t* cpu_s);
 
-    /**
-     * @brief Dump CPU registers
-     * @returns Pointer to register set
-     */
-    z6502_register_set_t* dump_register(void);
+/**
+ * @brief execute one instruction from memory at program counter
+ * @param cpu_s CPU structure pointer
+ * @returns number of clock cycles spent
+ */
+int z6502_step(z6502_cpu_t* cpu_s);
 
-    /**
-     * @brief Get instruction mnemonic from opcode
-     * @returns Pointer to mnemonic string
-     */
-    const char* get_instruction_mnemonic(void);
+/**
+ * @brief Get instruction mnemonic from opcode
+ * @param cpu_s CPU structure pointer
+ * @returns Pointer to mnemonic string
+ */
+const char* z6502_get_instruction_mnemonic(z6502_cpu_t* cpu_s);
 
-    /**
-     * @brief Get instruction mnemonic from opcode
-     * @returns Pointer to mnemonic string
-     */
-    const char* get_addressing_mode_str(void);
+/**
+ * @brief Get instruction mnemonic from opcode
+ * @param cpu_s CPU structure pointer
+ * @returns Pointer to mnemonic string
+ */
+const char* z6502_get_addressing_mode_str(z6502_cpu_t* cpu_s);
 
-    /**
-     * @brief Get instruction opcode from memory
-     * @returns Instruction opcode
-     */
-    uint8_t get_instruction_opcode(void);
 
-    /**
-     * @brief Get instruction opcode from memory
-     * @returns Current instruction address
-     */
-    uint16_t get_instruction_address(void);
+//class Z6502
+//{
+//private:
+//    /*Registers*/
+//    z6502_register_set_t _reg;
+//    
+//    /*Memory*/
+//    uint8_t* _memory_space;
+//
+//    /*Instruction register*/
+//    uint8_t _opcode;
+//    uint16_t _instr_addr;
+//public:
+//    /**
+//     * @brief Create Z6502 CPU
+//     * @param memory_space pointer to memory space
+//     * @param io_space pointer to io space
+//     */
+//    Z6502(uint8_t* memory_space);
+//
+//    /**
+//     * @brief Reset CPU register
+//     */
+//    void reset(void);
+//
+//    /**
+//     * @brief execute one instruction from memory at program counter
+//     * @returns number of clock cycles spent
+//     */
+//    int step(void);
+//
+//    /**
+//     * @brief Dump CPU registers
+//     * @returns Pointer to register set
+//     */
+//    z6502_register_set_t* dump_register(void);
+//
 
-    /**
-     * @brief Z6502 destructor
-     */
-    ~Z6502();
-};
-
+//
+//    /**
+//     * @brief Get instruction opcode from memory
+//     * @returns Instruction opcode
+//     */
+//    uint8_t get_instruction_opcode(void);
+//
+//    /**
+//     * @brief Get instruction opcode from memory
+//     * @returns Current instruction address
+//     */
+//    uint16_t get_instruction_address(void);
+//
+//    /**
+//     * @brief Z6502 destructor
+//     */
+//    ~Z6502();
+//};
+//
 #endif // Z6502_CORE_H_INCLUDED

@@ -39,4 +39,4 @@ void emu_memory_monitor(uint8_t* memory_ptr, size_t memory_size);
  * @brief Dump CPU state to console
  * @param cpu Pointer to Z6502 CPU instance
  */
-void emu_cpuState_dump(Z6502* cpu, uint8_t json_flag);
+void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag);

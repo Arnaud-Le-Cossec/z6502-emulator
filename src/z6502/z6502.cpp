@@ -642,39 +642,38 @@ void z6502_op_TYA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode
 }
 
 
-Z6502::Z6502(uint8_t* memory_space)
-{
-    _memory_space = memory_space;
+void z6502_init(z6502_cpu_t* cpu_s, uint8_t* memory_ptr){
+    cpu_s->memory_ptr = memory_ptr;
 }
 
-void Z6502::reset(void) {
+void z6502_reset(z6502_cpu_t* cpu_s) {
     /*Init special purpose registers*/
-    _reg.program_counter = (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS+1U]<<8) | (uint16_t)(_memory_space[Z6502_RESET_VECTOR_ADDRESS]);
-    _reg.stack_pointer = 0xFFU;
-    _reg.accumulator = 0U;
-    _reg.x = 0U;
-    _reg.y = 0U;
+    cpu_s->reg.program_counter = (uint16_t)(cpu_s->memory_ptr[Z6502_RESET_VECTOR_ADDRESS+1U]<<8) | (uint16_t)(cpu_s->memory_ptr[Z6502_RESET_VECTOR_ADDRESS]);
+    cpu_s->reg.stack_pointer = 0xFFU;
+    cpu_s->reg.accumulator = 0U;
+    cpu_s->reg.x = 0U;
+    cpu_s->reg.y = 0U;
 
-    _reg.processor_status.carry = 0U;
-    _reg.processor_status.zero = 0U;
-    _reg.processor_status.irq_disable = 0U;
-    _reg.processor_status.decimal_mode = 0U;
-    _reg.processor_status.break_flg = 0U;
-    _reg.processor_status.overflow = 0U;
-    _reg.processor_status.negative = 0U;
+    cpu_s->reg.processor_status.carry = 0U;
+    cpu_s->reg.processor_status.zero = 0U;
+    cpu_s->reg.processor_status.irq_disable = 0U;
+    cpu_s->reg.processor_status.decimal_mode = 0U;
+    cpu_s->reg.processor_status.break_flg = 0U;
+    cpu_s->reg.processor_status.overflow = 0U;
+    cpu_s->reg.processor_status.negative = 0U;
 
-    _opcode = 0U;
+    cpu_s->current_opcode = 0U;
 }
 
-int Z6502::step(void) {
+int z6502_step(z6502_cpu_t* cpu_s) {
     /*Read instruction*/
-    _instr_addr = _reg.program_counter;
-    _opcode = _memory_space[_reg.program_counter];
-    _reg.program_counter++;
+    cpu_s->current_instr_addr = cpu_s->reg.program_counter;
+    cpu_s->current_opcode = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+    cpu_s->reg.program_counter++;
 
     /*Execute instruction*/
-    if(z6502_instruction_set[_opcode] != NULL){
-        z6502_instruction_set[_opcode](_memory_space, &_reg, z6502_instruction_mode[_opcode]);
+    if(z6502_instruction_set[cpu_s->current_opcode] != NULL){
+        z6502_instruction_set[cpu_s->current_opcode](cpu_s->memory_ptr, &cpu_s->reg, z6502_instruction_mode[cpu_s->current_opcode]);
     }
     else{
         //Unhandled opcode
@@ -684,26 +683,26 @@ int Z6502::step(void) {
     return 0;
 }
 
-z6502_register_set_t* Z6502::dump_register(void){
-    return &_reg;
+//z6502_register_set_t* Z6502::dump_register(void){
+//    return &_reg;
+//}
+//
+const char* z6502_get_instruction_mnemonic(z6502_cpu_t* cpu_s) {
+    return z6502_instruction_mnemonic[cpu_s->current_opcode];
 }
 
-const char* Z6502::get_instruction_mnemonic(void) {
-    return z6502_instruction_mnemonic[_opcode];
+const char* z6502_get_addressing_mode_str(z6502_cpu_t* cpu_s) {
+    return z6502_addressing_mode_str[z6502_instruction_mode[cpu_s->current_opcode]];
 }
-
-const char* Z6502::get_addressing_mode_str(void) {
-    return z6502_addressing_mode_str[z6502_instruction_mode[_opcode]];
-}
-
-uint8_t Z6502::get_instruction_opcode(void) {
-    return _opcode;
-}
-
-uint16_t Z6502::get_instruction_address(void) {
-    return _instr_addr;
-}
-
-Z6502::~Z6502()
-{
-}
+//
+//uint8_t Z6502::get_instruction_opcode(void) {
+//    return _opcode;
+//}
+//
+//uint16_t Z6502::get_instruction_address(void) {
+//    return _instr_addr;
+//}
+//
+//Z6502::~Z6502()
+//{
+//}

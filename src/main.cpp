@@ -84,24 +84,27 @@ int main(int argc,char ** argv) {
     }
 
     /*Create components*/
-    Z6502 cpu(memory_space);
+    //Z6502 cpu(memory_space);
+    z6502_cpu_t cpu_s;
+    z6502_init(&cpu_s, memory_space);
 
     /*Reset CPU*/
-    cpu.reset();
+    //cpu.reset();
+    z6502_reset(&cpu_s);
 
     /*Emulation loop*/
     while(1){
 
 
-        if (cpu.step() != 0){
-            fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu.get_instruction_opcode(), cpu.get_instruction_address());
+        if (z6502_step(&cpu_s) != 0){
+            fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu_s.current_opcode, cpu_s.current_instr_addr);
             free(memory_space);
             exit(EXIT_FAILURE);
         }
         
 
         if(verbose_flag){
-            emu_cpuState_dump(&cpu, (uint8_t)json_flag);
+            emu_cpuState_dump(&cpu_s, (uint8_t)json_flag);
         }
 
         if(step_mode){
@@ -114,7 +117,7 @@ int main(int argc,char ** argv) {
         }
 
         /*Check for BRK instruction*/
-        if(stop_on_brk && cpu.dump_register()->processor_status.break_flg == 1U){
+        if(stop_on_brk && cpu_s.reg.processor_status.break_flg == 1U){
             printf("BRK flag set. Stopping execution.\n");
             break;
         }
