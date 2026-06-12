@@ -1,6 +1,6 @@
 # Z6502 EMULATOR
 
-Another 6502 CPU instruction set simulator, written in C++
+Another 6502 CPU instruction set simulator, written in C
 
 ## Build
 

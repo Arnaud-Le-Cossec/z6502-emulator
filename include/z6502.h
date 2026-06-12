@@ -15,8 +15,8 @@
 #ifndef Z6502_CORE_H_INCLUDED
 #define Z6502_CORE_H_INCLUDED
 
-#include <cstdint>
-#include <cstddef>
+#include <stdint.h>
+#include <stddef.h>
 
 #define Z6502_MAX_MEMORY_SIZE_BYTES 65536U
 
@@ -28,7 +28,7 @@
 #define Z6502_IRQ_VECTOR_ADDRESS 0xFFFEU
 
 /*Addressing modes*/
-enum z6502_addressing_mode_t
+typedef enum 
 {
     ___, /* Undefined*/
     IMP, /* Implied */
@@ -44,7 +44,7 @@ enum z6502_addressing_mode_t
     IND, /* Indirect */
     INX, /* X-indexed, indirect - aka (Indirect,X) */
     INY, /* Indirect, Y-indexed	- aka (Indirect),Y */
-};
+} z6502_addressing_mode_t;
 
 /*Status indicator flags structure*/
 typedef struct
