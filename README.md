@@ -1,5 +1,7 @@
 # Z6502 EMULATOR
 
+[![Linux build & test](https://github.com/Arnaud-Le-Cossec/z6502-emulator/actions/workflows/cmake-linux.yml/badge.svg)](https://github.com/Arnaud-Le-Cossec/z6502-emulator/actions/workflows/cmake-linux.yml)
+
 Another 6502 CPU instruction set simulator, written in C
 
 ## Build
