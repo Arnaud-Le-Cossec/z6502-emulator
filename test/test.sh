@@ -12,11 +12,25 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  MIT License for more details.    
 
-# find the z6502_emulator executable
-if [ -f "../build/src/z6502_emulator" ]; then
-    Z6502="../build/src/z6502_emulator"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# find the emulator executable
+# use path from argument if provided, otherwise use default
+if [ -n "$1" ]; then
+    Z6502="$1"
 else
-    echo "Error: z6502_emulator executable not found. Please build the project first."
+    Z6502="$SCRIPT_DIR/../build/src/z6502_emulator"
+fi
+
+if [ -n "$2" ]; then
+    TEST_ENGINE="$2"
+else
+    TEST_ENGINE="$SCRIPT_DIR/test_engine.py"
+fi
+
+# verify the file exists
+if [ ! -f "$Z6502" ]; then
+    echo "Error: emulator executable not found at '$Z6502'. Please build the project or provide the correct path."
     exit 1
 fi
 
@@ -38,7 +52,7 @@ TESTS=(
 
 for TEST in "${TESTS[@]}"; do
     echo "Running $TEST..."
-    python3 test_engine.py "$Z6502" "$TEST/$TEST.bin" "$TEST/$TEST.asm"
+    python3 $TEST_ENGINE "$Z6502" "$SCRIPT_DIR/$TEST/$TEST.bin" "$SCRIPT_DIR/$TEST/$TEST.asm"
     if [ $? -ne 0 ]; then
         echo "Test $TEST failed."
         exit 1
