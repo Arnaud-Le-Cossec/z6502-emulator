@@ -27,6 +27,25 @@
 #define Z6502_RESET_VECTOR_ADDRESS 0xFFFCU
 #define Z6502_IRQ_VECTOR_ADDRESS 0xFFFEU
 
+/*Addressing modes*/
+enum z6502_addressing_mode_t
+{
+    ___, /* Undefined*/
+    IMP, /* Implied */
+    ACC, /* Accumulator */
+    IMM, /* Immediate */
+    ZP,  /* Zero Page */
+    ZPX, /* Zero Page,X */
+    ZPY, /* Zero Page,Y */
+    REL, /* Relative */
+    ABS, /* Absolute */
+    ABX, /* Absolute,X */
+    ABY, /* Absolute,Y */
+    IND, /* Indirect */
+    INX, /* X-indexed, indirect - aka (Indirect,X) */
+    INY, /* Indirect, Y-indexed	- aka (Indirect),Y */
+};
+
 /*Status indicator flags structure*/
 typedef struct
 {
@@ -60,89 +79,73 @@ typedef struct
     uint8_t* memory_ptr;
 
     /*Instruction register*/
-    uint8_t current_opcode;
-    uint16_t current_instr_addr;
+    uint8_t ir_opcode;
+    uint16_t ir_addr;
+    z6502_addressing_mode_t ir_mode;
 } z6502_cpu_t;
 
-/*Addressing modes*/
-enum z6502_addressing_mode_t
-{
-    ___, /* Undefined*/
-    IMP, /* Implied */
-    ACC, /* Accumulator */
-    IMM, /* Immediate */
-    ZP,  /* Zero Page */
-    ZPX, /* Zero Page,X */
-    ZPY, /* Zero Page,Y */
-    REL, /* Relative */
-    ABS, /* Absolute */
-    ABX, /* Absolute,X */
-    ABY, /* Absolute,Y */
-    IND, /* Indirect */
-    INX, /* X-indexed, indirect - aka (Indirect,X) */
-    INY, /* Indirect, Y-indexed	- aka (Indirect),Y */
-};
+
 
 /*Instruction function prototypes*/
-void z6502_op_ADC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_AND(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_ASL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BCC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BCS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BEQ(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BIT(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BMI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BNE(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BPL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BRK(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BVC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_BVS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CLC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CLD(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CLI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CLV(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CPX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_CPY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_DEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_DEX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_DEY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_EOR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_INC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_INX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_INY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_JMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_JSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_LDA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_LDX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_LDY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_LSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_NOP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_ORA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_PHA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_PHP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_PLA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_PLP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_ROL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_ROR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_RTI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_RTS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_SBC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_SEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_SED(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_SEI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_STA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_STX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_STY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TAX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TAY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TSX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TXA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TXS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
-void z6502_op_TYA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
+void z6502_op_ADC(z6502_cpu_t* cpu_s);
+void z6502_op_AND(z6502_cpu_t* cpu_s);
+void z6502_op_ASL(z6502_cpu_t* cpu_s);
+void z6502_op_BCC(z6502_cpu_t* cpu_s);
+void z6502_op_BCS(z6502_cpu_t* cpu_s);
+void z6502_op_BEQ(z6502_cpu_t* cpu_s);
+void z6502_op_BIT(z6502_cpu_t* cpu_s);
+void z6502_op_BMI(z6502_cpu_t* cpu_s);
+void z6502_op_BNE(z6502_cpu_t* cpu_s);
+void z6502_op_BPL(z6502_cpu_t* cpu_s);
+void z6502_op_BRK(z6502_cpu_t* cpu_s);
+void z6502_op_BVC(z6502_cpu_t* cpu_s);
+void z6502_op_BVS(z6502_cpu_t* cpu_s);
+void z6502_op_CLC(z6502_cpu_t* cpu_s);
+void z6502_op_CLD(z6502_cpu_t* cpu_s);
+void z6502_op_CLI(z6502_cpu_t* cpu_s);
+void z6502_op_CLV(z6502_cpu_t* cpu_s);
+void z6502_op_CMP(z6502_cpu_t* cpu_s);
+void z6502_op_CPX(z6502_cpu_t* cpu_s);
+void z6502_op_CPY(z6502_cpu_t* cpu_s);
+void z6502_op_DEC(z6502_cpu_t* cpu_s);
+void z6502_op_DEX(z6502_cpu_t* cpu_s);
+void z6502_op_DEY(z6502_cpu_t* cpu_s);
+void z6502_op_EOR(z6502_cpu_t* cpu_s);
+void z6502_op_INC(z6502_cpu_t* cpu_s);
+void z6502_op_INX(z6502_cpu_t* cpu_s);
+void z6502_op_INY(z6502_cpu_t* cpu_s);
+void z6502_op_JMP(z6502_cpu_t* cpu_s);
+void z6502_op_JSR(z6502_cpu_t* cpu_s);
+void z6502_op_LDA(z6502_cpu_t* cpu_s);
+void z6502_op_LDX(z6502_cpu_t* cpu_s);
+void z6502_op_LDY(z6502_cpu_t* cpu_s);
+void z6502_op_LSR(z6502_cpu_t* cpu_s);
+void z6502_op_NOP(z6502_cpu_t* cpu_s);
+void z6502_op_ORA(z6502_cpu_t* cpu_s);
+void z6502_op_PHA(z6502_cpu_t* cpu_s);
+void z6502_op_PHP(z6502_cpu_t* cpu_s);
+void z6502_op_PLA(z6502_cpu_t* cpu_s);
+void z6502_op_PLP(z6502_cpu_t* cpu_s);
+void z6502_op_ROL(z6502_cpu_t* cpu_s);
+void z6502_op_ROR(z6502_cpu_t* cpu_s);
+void z6502_op_RTI(z6502_cpu_t* cpu_s);
+void z6502_op_RTS(z6502_cpu_t* cpu_s);
+void z6502_op_SBC(z6502_cpu_t* cpu_s);
+void z6502_op_SEC(z6502_cpu_t* cpu_s);
+void z6502_op_SED(z6502_cpu_t* cpu_s);
+void z6502_op_SEI(z6502_cpu_t* cpu_s);
+void z6502_op_STA(z6502_cpu_t* cpu_s);
+void z6502_op_STX(z6502_cpu_t* cpu_s);
+void z6502_op_STY(z6502_cpu_t* cpu_s);
+void z6502_op_TAX(z6502_cpu_t* cpu_s);
+void z6502_op_TAY(z6502_cpu_t* cpu_s);
+void z6502_op_TSX(z6502_cpu_t* cpu_s);
+void z6502_op_TXA(z6502_cpu_t* cpu_s);
+void z6502_op_TXS(z6502_cpu_t* cpu_s);
+void z6502_op_TYA(z6502_cpu_t* cpu_s);
 
 
-typedef void (*z6502_instruction_t)(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode);
+typedef void (*z6502_instruction_t)(z6502_cpu_t* cpu_s);
 
 static const z6502_instruction_t z6502_instruction_set[256] = {
     /* 0x00 - 0x0F */

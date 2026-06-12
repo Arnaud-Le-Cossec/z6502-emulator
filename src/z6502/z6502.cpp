@@ -25,11 +25,11 @@
  * @param mode Addressing mode
  * @return Operand address or value
  */
-uint16_t _get_operand(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+uint16_t _get_operand(z6502_cpu_t* cpu_s){
     uint16_t lo = 0U;
     uint16_t hi = 0U;
     uint16_t operand = 0U;
-    switch (mode)
+    switch (cpu_s->ir_mode)
     {
         case IMP:
             /*No operand*/
@@ -39,72 +39,72 @@ uint16_t _get_operand(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_
             return 0;
         case IMM:
             /*Return 8 bit value*/
-            operand = mem[reg->program_counter];
-            reg->program_counter++;
+            operand = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            cpu_s->reg.program_counter++;
             return operand;
         case ZP:
             /*Return address in zero page (0x0000-0x00FF)*/
-            operand = mem[reg->program_counter];
-            reg->program_counter++;
+            operand = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            cpu_s->reg.program_counter++;
             return operand;
         case ZPX:
             /*Return address in zero page (0x0000-0x00FF), indexed by X*/
-            operand = (mem[reg->program_counter] + reg->x) % 256;
-            reg->program_counter++;
+            operand = (cpu_s->memory_ptr[cpu_s->reg.program_counter] + cpu_s->reg.x) % 256;
+            cpu_s->reg.program_counter++;
             return operand;
         case ZPY:
             /*Return address in zero page (0x0000-0x00FF), indexed by Y*/
-            operand = (mem[reg->program_counter] + reg->y) % 256;
-            reg->program_counter++;
+            operand = (cpu_s->memory_ptr[cpu_s->reg.program_counter] + cpu_s->reg.y) % 256;
+            cpu_s->reg.program_counter++;
             return operand;
         case REL:
             /*Return branch offset value*/
-            operand = mem[reg->program_counter];
-            reg->program_counter++;
+            operand = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            cpu_s->reg.program_counter++;
             return operand;
         case ABS:
             /*Return absolute address*/
-            lo = mem[reg->program_counter];
-            hi = mem[reg->program_counter + 1];
+            lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
             operand = (hi << 8) | lo;
-            reg->program_counter += 2;
+            cpu_s->reg.program_counter += 2;
             return operand;
         case ABX:
             /*Return absolute address, indexed by X*/
-            lo = mem[reg->program_counter];
-            hi = mem[reg->program_counter + 1];
-            operand = (((hi << 8) | lo) + reg->x) % 65536;
-            reg->program_counter += 2;
+            lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
+            operand = (((hi << 8) | lo) + cpu_s->reg.x) % 65536;
+            cpu_s->reg.program_counter += 2;
             return operand;
         case ABY:
             /*Return absolute address, indexed by Y*/
-            lo = mem[reg->program_counter];
-            hi = mem[reg->program_counter + 1];
-            operand = (((hi << 8) | lo) + reg->y) % 65536;
-            reg->program_counter += 2;
+            lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
+            operand = (((hi << 8) | lo) + cpu_s->reg.y) % 65536;
+            cpu_s->reg.program_counter += 2;
             return operand;
         case IND:
             /*Return indirect address*/
-            lo = mem[reg->program_counter];
-            hi = mem[reg->program_counter + 1];
+            lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
             operand = (hi << 8) | lo;
-            reg->program_counter += 2;
-            return mem[operand] | (mem[(operand + 1) % 65536] << 8);
+            cpu_s->reg.program_counter += 2;
+            return cpu_s->memory_ptr[operand] | (cpu_s->memory_ptr[(operand + 1) % 65536] << 8);
         case INX:
             /*Return X-indexed indirect address*/
-            operand = (mem[reg->program_counter] + reg->x) % 256;
-            lo = mem[operand];
-            hi = mem[(operand + 1) % 256];
+            operand = (cpu_s->memory_ptr[cpu_s->reg.program_counter] + cpu_s->reg.x) % 256;
+            lo = cpu_s->memory_ptr[operand];
+            hi = cpu_s->memory_ptr[(operand + 1) % 256];
             operand = (hi << 8) | lo;
-            reg->program_counter++;
+            cpu_s->reg.program_counter++;
             return operand;
         case INY:
             /*Return Indirect Y-indexed address*/
-            operand = mem[reg->program_counter];
-            lo = mem[operand];
-            hi = mem[(operand + 1) % 256];
-            operand = ((hi << 8) | lo) + reg->y;
-            reg->program_counter++;
+            operand = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+            lo = cpu_s->memory_ptr[operand];
+            hi = cpu_s->memory_ptr[(operand + 1) % 256];
+            operand = ((hi << 8) | lo) + cpu_s->reg.y;
+            cpu_s->reg.program_counter++;
             return operand;
         default:
             return 0;
@@ -172,7 +172,7 @@ void _update_overflow_flag(z6502_register_set_t* reg, uint8_t a, uint8_t b, uint
  */
 void _pull_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t* value){
     reg->stack_pointer = (reg->stack_pointer + 1U) % 256;
-    *value = mem[0x0100 + reg->stack_pointer];
+    *value = mem[Z6502_STACK_BASE_ADDRESS + reg->stack_pointer];
 }
 
 /**
@@ -182,7 +182,7 @@ void _pull_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t* value){
  * @param value Value to push onto the stack
  */
 void _push_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t value){
-    mem[0x0100 + reg->stack_pointer] = value;
+    mem[Z6502_STACK_BASE_ADDRESS + reg->stack_pointer] = value;
     reg->stack_pointer = (reg->stack_pointer - 1U) % 256;
 }
 
@@ -194,7 +194,7 @@ void _push_stack(uint8_t* mem, z6502_register_set_t* reg, uint8_t value){
 void _pull_register_stack(uint8_t* mem, z6502_register_set_t* reg){
     uint8_t tmp;
     reg->stack_pointer = (reg->stack_pointer + 1U) % 256;
-    tmp = mem[0x0100 + reg->stack_pointer];
+    tmp = mem[Z6502_STACK_BASE_ADDRESS + reg->stack_pointer];
     reg->processor_status.negative = (tmp >> 7) & 0x01;
     reg->processor_status.overflow = (tmp >> 6) & 0x01;
     reg->processor_status.decimal_mode = (tmp >> 3) & 0x01;
@@ -209,14 +209,15 @@ void _pull_register_stack(uint8_t* mem, z6502_register_set_t* reg){
  * @param reg Pointer to register set
  */
 void _push_register_stack(uint8_t* mem, z6502_register_set_t* reg){
-    mem[0x0100 + reg->stack_pointer] = (uint8_t)(reg->processor_status.negative << 7 |
-                                                 reg->processor_status.overflow << 6 |
-                                                 1 << 5 |
-                                                 1 << 4 |
-                                                 reg->processor_status.decimal_mode << 3 |
-                                                 reg->processor_status.irq_disable << 2 |
-                                                 reg->processor_status.zero << 1 |
-                                                 reg->processor_status.carry);
+    mem[Z6502_STACK_BASE_ADDRESS+ reg->stack_pointer] = (uint8_t)(
+        reg->processor_status.negative << 7 |
+        reg->processor_status.overflow << 6 |
+        1 << 5 |
+        1 << 4 |
+        reg->processor_status.decimal_mode << 3 |
+        reg->processor_status.irq_disable << 2 |
+        reg->processor_status.zero << 1 |
+        reg->processor_status.carry);
     reg->stack_pointer = (reg->stack_pointer - 1U) % 256;
 }
 
@@ -224,421 +225,420 @@ void _push_register_stack(uint8_t* mem, z6502_register_set_t* reg){
 // Instruction implementations
 //*****************************************************************************
 
-void z6502_op_ADC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_ADC(z6502_cpu_t* cpu_s){
     uint8_t tmp;
     uint16_t res;
-    uint8_t local_carry;
-    if(mode == IMM){
-        tmp = _get_operand(mem, reg, mode);
+    if(cpu_s->ir_mode == IMM){
+        tmp = _get_operand(cpu_s);
     }
     else{
-        tmp = mem[_get_operand(mem, reg, mode)];
+        tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
 
-    if(reg->processor_status.decimal_mode){
+    if(cpu_s->reg.processor_status.decimal_mode){
         /*Decimal mode*/
-        res = (reg->accumulator & 0x0F) + (tmp & 0x0F) + reg->processor_status.carry;
+        res = (cpu_s->reg.accumulator & 0x0F) + (tmp & 0x0F) + cpu_s->reg.processor_status.carry;
         if (res>= 0x0A) res = ((res+0x06) & 0x0F) + 0x10;
-        res = (reg->accumulator & 0xF0) + (tmp & 0xF0) + res;
+        res = (cpu_s->reg.accumulator & 0xF0) + (tmp & 0xF0) + res;
         if (res >= 0xA0) res = res + 0x60;
     }
     else{
         /*Binary mode*/
-        res = reg->accumulator + tmp + reg->processor_status.carry;
+        res = cpu_s->reg.accumulator + tmp + cpu_s->reg.processor_status.carry;
     }
 
-    _update_overflow_flag(reg, reg->accumulator, tmp, res);
-    _update_carry_flag(reg, res);
-    reg->accumulator = (uint8_t)(res % 256);
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+    _update_overflow_flag(&cpu_s->reg, cpu_s->reg.accumulator, tmp, res);
+    _update_carry_flag(&cpu_s->reg, res);
+    cpu_s->reg.accumulator = (uint8_t)(res % 256);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_AND(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->accumulator &= (uint8_t)_get_operand(mem, reg, mode);
+void z6502_op_AND(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.accumulator &= (uint8_t)_get_operand(cpu_s);
     }
     else{
-        reg->accumulator &= mem[_get_operand(mem, reg, mode)];
+        cpu_s->reg.accumulator &= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_ASL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_ASL(z6502_cpu_t* cpu_s){
     uint16_t addr;
-    if (mode == ACC) {
-        reg->processor_status.carry = (reg->accumulator >> 7) & 0x01;
-        reg->accumulator = (reg->accumulator << 1);
-        _update_zero_flag(reg, reg->accumulator);
-        _update_negative_flag(reg, reg->accumulator);
+    if (cpu_s->ir_mode == ACC) {
+        cpu_s->reg.processor_status.carry = (cpu_s->reg.accumulator >> 7) & 0x01;
+        cpu_s->reg.accumulator = (cpu_s->reg.accumulator << 1);
+        _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+        _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     }
     else{
-        addr = _get_operand(mem, reg, mode);
-        reg->processor_status.carry = (mem[addr] >> 7) & 0x01;
-        mem[addr] = (mem[addr] << 1);
-        _update_zero_flag(reg, mem[addr]);
-        _update_negative_flag(reg, mem[addr]);
+        addr = _get_operand(cpu_s);
+        cpu_s->reg.processor_status.carry = (cpu_s->memory_ptr[addr] >> 7) & 0x01;
+        cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] << 1);
+        _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+        _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
     }
 }
-void z6502_op_BCC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.carry == 0U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BCC(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.carry == 0U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BCS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.carry == 1U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BCS(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.carry == 1U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BEQ(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.zero == 1U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BEQ(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.zero == 1U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BIT(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    uint8_t tmp = mem[_get_operand(mem, reg, mode)];
-    _update_zero_flag(reg, reg->accumulator & tmp);
-    _update_negative_flag(reg, tmp);
-    reg->processor_status.overflow = (tmp >> 6) & 0x01;
+void z6502_op_BIT(z6502_cpu_t* cpu_s){
+    uint8_t tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator & tmp);
+    _update_negative_flag(&cpu_s->reg, tmp);
+    cpu_s->reg.processor_status.overflow = (tmp >> 6) & 0x01;
 }
-void z6502_op_BMI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.negative == 1U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BMI(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.negative == 1U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BNE(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.zero == 0U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BNE(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.zero == 0U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BPL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.negative == 0U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BPL(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.negative == 0U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BRK(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    uint16_t addr = (reg->program_counter + 2U) % 65536;
-    _push_stack(mem, reg, (uint8_t)((addr >> 8) & 0x00FF));
-    _push_stack(mem, reg, (uint8_t)(addr & 0x00FF));
-    _push_register_stack(mem, reg);
-    reg->program_counter = Z6502_IRQ_VECTOR_ADDRESS;
-    reg->processor_status.irq_disable = 1U;
-    reg->processor_status.break_flg = 1U;
+void z6502_op_BRK(z6502_cpu_t* cpu_s){
+    uint16_t addr = (cpu_s->reg.program_counter + 2U) % 65536;
+    _push_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t)((addr >> 8) & 0x00FF));
+    _push_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t)(addr & 0x00FF));
+    _push_register_stack(cpu_s->memory_ptr, &cpu_s->reg);
+    cpu_s->reg.program_counter = Z6502_IRQ_VECTOR_ADDRESS;
+    cpu_s->reg.processor_status.irq_disable = 1U;
+    cpu_s->reg.processor_status.break_flg = 1U;
 }
-void z6502_op_BVC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.overflow == 0U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BVC(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.overflow == 0U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_BVS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    int8_t addr = _get_operand(mem, reg, mode);
-    if (reg->processor_status.overflow == 1U){
-        reg->program_counter = (reg->program_counter + addr) % 65536;
+void z6502_op_BVS(z6502_cpu_t* cpu_s){
+    int8_t addr = _get_operand(cpu_s);
+    if (cpu_s->reg.processor_status.overflow == 1U){
+        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
     }
 }
-void z6502_op_CLC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.carry = 0U;
+void z6502_op_CLC(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.carry = 0U;
 }
-void z6502_op_CLD(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.decimal_mode = 0U;
+void z6502_op_CLD(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.decimal_mode = 0U;
 }
-void z6502_op_CLI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.irq_disable = 0U;
+void z6502_op_CLI(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.irq_disable = 0U;
 }
-void z6502_op_CLV(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.overflow = 0U;
+void z6502_op_CLV(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.overflow = 0U;
 }
-void z6502_op_CMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_CMP(z6502_cpu_t* cpu_s){
     int8_t tmp;
-    if (mode == IMM){
-        tmp = _get_operand(mem, reg, mode);
+    if (cpu_s->ir_mode == IMM){
+        tmp = _get_operand(cpu_s);
     }
     else{
-        tmp = mem[_get_operand(mem, reg, mode)];
+        tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    tmp = reg->accumulator - tmp;
-    reg->processor_status.carry = (tmp >= 0)?1U:0U;
-    reg->processor_status.zero = (tmp == 0)?1U:0U;
-    reg->processor_status.negative = (tmp >> 7) & 0x01;
+    tmp = cpu_s->reg.accumulator - tmp;
+    cpu_s->reg.processor_status.carry = (tmp >= 0)?1U:0U;
+    cpu_s->reg.processor_status.zero = (tmp == 0)?1U:0U;
+    cpu_s->reg.processor_status.negative = (tmp >> 7) & 0x01;
 }
-void z6502_op_CPX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_CPX(z6502_cpu_t* cpu_s){
     int8_t tmp;
-    if (mode == IMM){
-        tmp = _get_operand(mem, reg, mode);
+    if (cpu_s->ir_mode == IMM){
+        tmp = _get_operand(cpu_s);
     }
     else{
-        tmp = mem[_get_operand(mem, reg, mode)];
+        tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    tmp = reg->x - tmp;
-    reg->processor_status.carry = (tmp >= 0)?1U:0U;
-    reg->processor_status.zero = (tmp == 0)?1U:0U;
-    reg->processor_status.negative = (tmp >> 7) & 0x01;
+    tmp = cpu_s->reg.x - tmp;
+    cpu_s->reg.processor_status.carry = (tmp >= 0)?1U:0U;
+    cpu_s->reg.processor_status.zero = (tmp == 0)?1U:0U;
+    cpu_s->reg.processor_status.negative = (tmp >> 7) & 0x01;
 }
-void z6502_op_CPY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_CPY(z6502_cpu_t* cpu_s){
     int8_t tmp;
-    if (mode == IMM){
-        tmp = _get_operand(mem, reg, mode);
+    if (cpu_s->ir_mode == IMM){
+        tmp = _get_operand(cpu_s);
     }
     else{
-        tmp = mem[_get_operand(mem, reg, mode)];
+        tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    tmp = reg->y - tmp;
-    reg->processor_status.carry = (tmp >= 0)?1U:0U;
-    reg->processor_status.zero = (tmp == 0)?1U:0U;
-    reg->processor_status.negative = (tmp >> 7) & 0x01;
+    tmp = cpu_s->reg.y - tmp;
+    cpu_s->reg.processor_status.carry = (tmp >= 0)?1U:0U;
+    cpu_s->reg.processor_status.zero = (tmp == 0)?1U:0U;
+    cpu_s->reg.processor_status.negative = (tmp >> 7) & 0x01;
 }
-void z6502_op_DEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    uint16_t addr = _get_operand(mem, reg, mode);
-    mem[addr] = (mem[addr] - 1U) % 256;
-    _update_zero_flag(reg, mem[addr]);
-    _update_negative_flag(reg, mem[addr]);
+void z6502_op_DEC(z6502_cpu_t* cpu_s){
+    uint16_t addr = _get_operand(cpu_s);
+    cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] - 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+    _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
 }
-void z6502_op_DEX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->x = (reg->x - 1U) % 256;
-    _update_zero_flag(reg, reg->x);
-    _update_negative_flag(reg, reg->x);
+void z6502_op_DEX(z6502_cpu_t* cpu_s){
+    cpu_s->reg.x = (cpu_s->reg.x - 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
 }
-void z6502_op_DEY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->y = (reg->y - 1U) % 256;
-    _update_zero_flag(reg, reg->y);
-    _update_negative_flag(reg, reg->y);
+void z6502_op_DEY(z6502_cpu_t* cpu_s){
+    cpu_s->reg.y = (cpu_s->reg.y - 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.y);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.y);
 }
-void z6502_op_EOR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->accumulator ^= (uint8_t)_get_operand(mem, reg, mode);
-    }
-    else{
-        reg->accumulator ^= mem[_get_operand(mem, reg, mode)];
-    }
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
-}
-void z6502_op_INC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    uint16_t addr = _get_operand(mem, reg, mode);
-    mem[addr] = (mem[addr] + 1U) % 256;
-    _update_zero_flag(reg, mem[addr]);
-    _update_negative_flag(reg, mem[addr]);
-}
-void z6502_op_INX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->x = (reg->x + 1U) % 256;
-    _update_zero_flag(reg, reg->x);
-    _update_negative_flag(reg, reg->x);
-}
-void z6502_op_INY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->y = (reg->y + 1U) % 256;
-    _update_zero_flag(reg, reg->y);
-    _update_negative_flag(reg, reg->y);
-}
-void z6502_op_JMP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->program_counter = _get_operand(mem, reg, mode);
-}
-void z6502_op_JSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    uint16_t tmp = (reg->program_counter + 1U) % 65536;
-    _push_stack(mem, reg, (uint8_t)((tmp >> 8) & 0x00FF));
-    _push_stack(mem, reg, (uint8_t)(tmp & 0x00FF));
-    reg->program_counter = _get_operand(mem, reg, mode);
-}
-void z6502_op_LDA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->accumulator = _get_operand(mem, reg, mode);
+void z6502_op_EOR(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.accumulator ^= (uint8_t)_get_operand(cpu_s);
     }
     else{
-        reg->accumulator = mem[_get_operand(mem, reg, mode)];
+        cpu_s->reg.accumulator ^= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_LDX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->x = _get_operand(mem, reg, mode);
+void z6502_op_INC(z6502_cpu_t* cpu_s){
+    uint16_t addr = _get_operand(cpu_s);
+    cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] + 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+    _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+}
+void z6502_op_INX(z6502_cpu_t* cpu_s){
+    cpu_s->reg.x = (cpu_s->reg.x + 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
+}
+void z6502_op_INY(z6502_cpu_t* cpu_s){
+    cpu_s->reg.y = (cpu_s->reg.y + 1U) % 256;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.y);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.y);
+}
+void z6502_op_JMP(z6502_cpu_t* cpu_s){
+    cpu_s->reg.program_counter = _get_operand(cpu_s);
+}
+void z6502_op_JSR(z6502_cpu_t* cpu_s){
+    uint16_t tmp = (cpu_s->reg.program_counter + 1U) % 65536;
+    _push_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t)((tmp >> 8) & 0x00FF));
+    _push_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t)(tmp & 0x00FF));
+    cpu_s->reg.program_counter = _get_operand(cpu_s);
+}
+void z6502_op_LDA(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.accumulator = _get_operand(cpu_s);
     }
     else{
-        reg->x = mem[_get_operand(mem, reg, mode)];
+        cpu_s->reg.accumulator = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    _update_zero_flag(reg, reg->x);
-    _update_negative_flag(reg, reg->x);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_LDY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->y = _get_operand(mem, reg, mode);
+void z6502_op_LDX(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.x = _get_operand(cpu_s);
     }
     else{
-        reg->y = mem[_get_operand(mem, reg, mode)];
+        cpu_s->reg.x = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    _update_zero_flag(reg, reg->y);
-    _update_negative_flag(reg, reg->y);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
 }
-void z6502_op_LSR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_LDY(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.y = _get_operand(cpu_s);
+    }
+    else{
+        cpu_s->reg.y = cpu_s->memory_ptr[_get_operand(cpu_s)];
+    }
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.y);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.y);
+}
+void z6502_op_LSR(z6502_cpu_t* cpu_s){
     uint16_t addr;
-    if (mode == ACC) {
-        reg->processor_status.carry = reg->accumulator & 0x01;
-        reg->accumulator = (reg->accumulator >> 1);
-        _update_zero_flag(reg, reg->accumulator);
-        _update_negative_flag(reg, reg->accumulator);
+    if (cpu_s->ir_mode == ACC) {
+        cpu_s->reg.processor_status.carry = cpu_s->reg.accumulator & 0x01;
+        cpu_s->reg.accumulator = (cpu_s->reg.accumulator >> 1);
+        _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+        _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     }
     else{
-        addr = _get_operand(mem, reg, mode);
-        reg->processor_status.carry = mem[addr] & 0x01;
-        mem[addr] = (mem[addr] >> 1);
-        _update_zero_flag(reg, mem[addr]);
-        _update_negative_flag(reg, mem[addr]);
+        addr = _get_operand(cpu_s);
+        cpu_s->reg.processor_status.carry = cpu_s->memory_ptr[addr] & 0x01;
+        cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] >> 1);
+        _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+        _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
     }
 }
-void z6502_op_NOP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_NOP(z6502_cpu_t* cpu_s){
     return;
 }
-void z6502_op_ORA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    if (mode == IMM) {
-        reg->accumulator |= (uint8_t)_get_operand(mem, reg, mode);
+void z6502_op_ORA(z6502_cpu_t* cpu_s){
+    if (cpu_s->ir_mode == IMM) {
+        cpu_s->reg.accumulator |= (uint8_t)_get_operand(cpu_s);
     }
     else{
-        reg->accumulator |= mem[_get_operand(mem, reg, mode)];
+        cpu_s->reg.accumulator |= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_PHA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _push_stack(mem, reg, reg->accumulator);
+void z6502_op_PHA(z6502_cpu_t* cpu_s){
+    _push_stack(cpu_s->memory_ptr, &cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_PHP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _push_register_stack(mem, reg);
+void z6502_op_PHP(z6502_cpu_t* cpu_s){
+    _push_register_stack(cpu_s->memory_ptr, &cpu_s->reg);
 }
-void z6502_op_PLA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _pull_stack(mem,reg, &reg->accumulator);
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+void z6502_op_PLA(z6502_cpu_t* cpu_s){
+    _pull_stack(cpu_s->memory_ptr, &cpu_s->reg, &cpu_s->reg.accumulator);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_PLP(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _pull_register_stack(mem, reg);
+void z6502_op_PLP(z6502_cpu_t* cpu_s){
+    _pull_register_stack(cpu_s->memory_ptr, &cpu_s->reg);
 }
-void z6502_op_ROL(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_ROL(z6502_cpu_t* cpu_s){
     uint8_t c;
     uint16_t addr;
-    if (mode == ACC) {
-        c = (reg->accumulator >> 7) & 0x01;
-        reg->accumulator = (reg->accumulator << 1) | (reg->processor_status.carry);
-        reg->processor_status.carry = c;
-        _update_zero_flag(reg, reg->accumulator);
-        _update_negative_flag(reg, reg->accumulator);
+    if (cpu_s->ir_mode == ACC) {
+        c = (cpu_s->reg.accumulator >> 7) & 0x01;
+        cpu_s->reg.accumulator = (cpu_s->reg.accumulator << 1) | (cpu_s->reg.processor_status.carry);
+        cpu_s->reg.processor_status.carry = c;
+        _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+        _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     }
     else{
-        addr = _get_operand(mem, reg, mode);
-        c = (mem[addr] >> 7) & 0x01;
-        mem[addr] = (mem[addr] << 1) | (reg->processor_status.carry);
-        reg->processor_status.carry = c;
-        _update_zero_flag(reg, mem[addr]);
-        _update_negative_flag(reg, mem[addr]);
+        addr = _get_operand(cpu_s);
+        c = (cpu_s->memory_ptr[addr] >> 7) & 0x01;
+        cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] << 1) | (cpu_s->reg.processor_status.carry);
+        cpu_s->reg.processor_status.carry = c;
+        _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+        _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
     }
 }
-void z6502_op_ROR(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_ROR(z6502_cpu_t* cpu_s){
     uint8_t c;
     uint16_t addr;
-    if (mode == ACC) {
-        c = reg->accumulator & 0x01;
-        reg->accumulator = (reg->accumulator >> 1) | (reg->processor_status.carry << 7);
-        reg->processor_status.carry = c;
-        _update_zero_flag(reg, reg->accumulator);
-        _update_negative_flag(reg, reg->accumulator);
+    if (cpu_s->ir_mode == ACC) {
+        c = cpu_s->reg.accumulator & 0x01;
+        cpu_s->reg.accumulator = (cpu_s->reg.accumulator >> 1) | (cpu_s->reg.processor_status.carry << 7);
+        cpu_s->reg.processor_status.carry = c;
+        _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+        _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     }
     else{
-        addr = _get_operand(mem, reg, mode);
-        c = mem[addr] & 0x01;
-        mem[addr] = (mem[addr] >> 1) | (reg->processor_status.carry << 7);
-        reg->processor_status.carry = c;
-        _update_zero_flag(reg, mem[addr]);
-        _update_negative_flag(reg, mem[addr]);
+        addr = _get_operand(cpu_s);
+        c = cpu_s->memory_ptr[addr] & 0x01;
+        cpu_s->memory_ptr[addr] = (cpu_s->memory_ptr[addr] >> 1) | (cpu_s->reg.processor_status.carry << 7);
+        cpu_s->reg.processor_status.carry = c;
+        _update_zero_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
+        _update_negative_flag(&cpu_s->reg, cpu_s->memory_ptr[addr]);
     }
     
 }
-void z6502_op_RTI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _pull_register_stack(mem, reg);
-    _pull_stack(mem, reg, (uint8_t*)&reg->program_counter);
-    _pull_stack(mem, reg, (uint8_t*)&reg->program_counter + 1);
+void z6502_op_RTI(z6502_cpu_t* cpu_s){
+    _pull_register_stack(cpu_s->memory_ptr, &cpu_s->reg);
+    _pull_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t*)&cpu_s->reg.program_counter);
+    _pull_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t*)&cpu_s->reg.program_counter + 1);
 }
-void z6502_op_RTS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    _pull_stack(mem, reg, (uint8_t*)&reg->program_counter);
-    _pull_stack(mem, reg, (uint8_t*)&reg->program_counter + 1);
-    reg->program_counter++;
+void z6502_op_RTS(z6502_cpu_t* cpu_s){
+    _pull_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t*)&cpu_s->reg.program_counter);
+    _pull_stack(cpu_s->memory_ptr, &cpu_s->reg, (uint8_t*)&cpu_s->reg.program_counter + 1);
+    cpu_s->reg.program_counter++;
 }
-void z6502_op_SBC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
+void z6502_op_SBC(z6502_cpu_t* cpu_s){
     uint8_t tmp;
     int16_t res;
-    if(mode == IMM){
-        tmp = _get_operand(mem, reg, mode);
+    if(cpu_s->ir_mode == IMM){
+        tmp = _get_operand(cpu_s);
     }
     else{
-        tmp = mem[_get_operand(mem, reg, mode)];
+        tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
 
-    if(reg->processor_status.decimal_mode){
+    if(cpu_s->reg.processor_status.decimal_mode){
         /*Decimal mode*/
-        res = (reg->accumulator & 0x0F) - (tmp & 0x0F) - (1U - reg->processor_status.carry);
+        res = (cpu_s->reg.accumulator & 0x0F) - (tmp & 0x0F) - (1U - cpu_s->reg.processor_status.carry);
         if (res < 0x0) res = ((res-0x06) & 0x0F) - 0x10;
-        res = (reg->accumulator & 0xF0) - (tmp & 0xF0) + res;
+        res = (cpu_s->reg.accumulator & 0xF0) - (tmp & 0xF0) + res;
         if (res < 0x0) res = res - 0x60;
     }
     else{
         /*Binary mode*/
-        res = reg->accumulator - tmp - (1U - reg->processor_status.carry);
+        res = cpu_s->reg.accumulator - tmp - (1U - cpu_s->reg.processor_status.carry);
     }
 
-    _update_overflow_flag(reg, reg->accumulator, ~tmp, res);
-    _update_carry_flag(reg, res);
-    reg->accumulator = (uint8_t)(res % 256);
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+    _update_overflow_flag(&cpu_s->reg, cpu_s->reg.accumulator, ~tmp, res);
+    _update_carry_flag(&cpu_s->reg, res);
+    cpu_s->reg.accumulator = (uint8_t)(res % 256);
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_SEC(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.carry = 1U;
+void z6502_op_SEC(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.carry = 1U;
 }
-void z6502_op_SED(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.decimal_mode = 1U;
+void z6502_op_SED(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.decimal_mode = 1U;
 }
-void z6502_op_SEI(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->processor_status.irq_disable = 1U;
+void z6502_op_SEI(z6502_cpu_t* cpu_s){
+    cpu_s->reg.processor_status.irq_disable = 1U;
 }
-void z6502_op_STA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    mem[_get_operand(mem, reg, mode)] = reg->accumulator;
+void z6502_op_STA(z6502_cpu_t* cpu_s){
+    cpu_s->memory_ptr[_get_operand(cpu_s)] = cpu_s->reg.accumulator;
 }
-void z6502_op_STX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    mem[_get_operand(mem, reg, mode)] = reg->x;
+void z6502_op_STX(z6502_cpu_t* cpu_s){
+    cpu_s->memory_ptr[_get_operand(cpu_s)] = cpu_s->reg.x;
 }
-void z6502_op_STY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    mem[_get_operand(mem, reg, mode)] = reg->y;
+void z6502_op_STY(z6502_cpu_t* cpu_s){
+    cpu_s->memory_ptr[_get_operand(cpu_s)] = cpu_s->reg.y;
 }
-void z6502_op_TAX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->x = reg->accumulator;
-    _update_zero_flag(reg, reg->x);
-    _update_negative_flag(reg, reg->x);
+void z6502_op_TAX(z6502_cpu_t* cpu_s){
+    cpu_s->reg.x = cpu_s->reg.accumulator;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
 }
-void z6502_op_TAY(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->y = reg->accumulator;
-    _update_zero_flag(reg, reg->y);
-    _update_negative_flag(reg, reg->y);
+void z6502_op_TAY(z6502_cpu_t* cpu_s){
+    cpu_s->reg.y = cpu_s->reg.accumulator;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.y);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.y);
 }
-void z6502_op_TSX(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->x = reg->stack_pointer;
-    _update_zero_flag(reg, reg->x);
-    _update_negative_flag(reg, reg->x);
+void z6502_op_TSX(z6502_cpu_t* cpu_s){
+    cpu_s->reg.x = cpu_s->reg.stack_pointer;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
 }
-void z6502_op_TXA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->accumulator = reg->x;
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+void z6502_op_TXA(z6502_cpu_t* cpu_s){
+    cpu_s->reg.accumulator = cpu_s->reg.x;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
-void z6502_op_TXS(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->stack_pointer = reg->x;
+void z6502_op_TXS(z6502_cpu_t* cpu_s){
+    cpu_s->reg.stack_pointer = cpu_s->reg.x;
 }
-void z6502_op_TYA(uint8_t* mem, z6502_register_set_t* reg, z6502_addressing_mode_t mode){
-    reg->accumulator = reg->y;
-    _update_zero_flag(reg, reg->accumulator);
-    _update_negative_flag(reg, reg->accumulator);
+void z6502_op_TYA(z6502_cpu_t* cpu_s){
+    cpu_s->reg.accumulator = cpu_s->reg.y;
+    _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
+    _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
 
 
@@ -662,18 +662,19 @@ void z6502_reset(z6502_cpu_t* cpu_s) {
     cpu_s->reg.processor_status.overflow = 0U;
     cpu_s->reg.processor_status.negative = 0U;
 
-    cpu_s->current_opcode = 0U;
+    cpu_s->ir_opcode = 0U;
 }
 
 int z6502_step(z6502_cpu_t* cpu_s) {
     /*Read instruction*/
-    cpu_s->current_instr_addr = cpu_s->reg.program_counter;
-    cpu_s->current_opcode = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+    cpu_s->ir_addr = cpu_s->reg.program_counter;
+    cpu_s->ir_opcode = cpu_s->memory_ptr[cpu_s->reg.program_counter];
+    cpu_s->ir_mode = z6502_instruction_mode[cpu_s->ir_opcode];
     cpu_s->reg.program_counter++;
 
     /*Execute instruction*/
-    if(z6502_instruction_set[cpu_s->current_opcode] != NULL){
-        z6502_instruction_set[cpu_s->current_opcode](cpu_s->memory_ptr, &cpu_s->reg, z6502_instruction_mode[cpu_s->current_opcode]);
+    if(z6502_instruction_set[cpu_s->ir_opcode] != NULL){
+        z6502_instruction_set[cpu_s->ir_opcode](cpu_s);
     }
     else{
         //Unhandled opcode
@@ -684,9 +685,9 @@ int z6502_step(z6502_cpu_t* cpu_s) {
 }
 
 const char* z6502_get_instruction_mnemonic(z6502_cpu_t* cpu_s) {
-    return z6502_instruction_mnemonic[cpu_s->current_opcode];
+    return z6502_instruction_mnemonic[cpu_s->ir_opcode];
 }
 
 const char* z6502_get_addressing_mode_str(z6502_cpu_t* cpu_s) {
-    return z6502_addressing_mode_str[z6502_instruction_mode[cpu_s->current_opcode]];
+    return z6502_addressing_mode_str[z6502_instruction_mode[cpu_s->ir_opcode]];
 }

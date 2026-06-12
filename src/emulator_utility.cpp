@@ -181,7 +181,7 @@ void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag){
     const char json_format_str[] = "{ \"PC\": \"0x%04X\", \"NEXT\": \"0x%04X\", \"A\": \"0x%02X\", \"X\": \"0x%02X\", \"Y\": \"0x%02X\", \"SP\": \"0x%02X\", \"NV-BDIZC\": \"0b%d%d%d%d%d%d%d%d\", \"opcode\": \"0x%02X\", \"mnemonic\": \"%s\", \"addressing_mode\": \"%s\" }\n";
 
     printf(json_flag?json_format_str:std_format_str,
-           cpu_s->current_instr_addr,
+           cpu_s->ir_addr,
            cpu_s->reg.program_counter,
            cpu_s->reg.accumulator,
            cpu_s->reg.x,
@@ -195,7 +195,7 @@ void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag){
            cpu_s->reg.processor_status.irq_disable,
            cpu_s->reg.processor_status.zero,
            cpu_s->reg.processor_status.carry,
-           cpu_s->current_opcode,
+           cpu_s->ir_opcode,
            z6502_get_instruction_mnemonic(cpu_s),
            z6502_get_addressing_mode_str(cpu_s)
            );

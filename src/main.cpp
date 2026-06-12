@@ -95,7 +95,7 @@ int main(int argc,char ** argv) {
 
 
         if (z6502_step(&cpu_s) != 0){
-            fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu_s.current_opcode, cpu_s.current_instr_addr);
+            fprintf(stderr, "[CRITICAL] Unhandled opcode 0x%02X at address 0x%04X\n", cpu_s.ir_opcode, cpu_s.ir_addr);
             free(memory_space);
             exit(EXIT_FAILURE);
         }
