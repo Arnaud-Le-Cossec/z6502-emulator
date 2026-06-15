@@ -74,6 +74,7 @@ uint16_t _get_operand(z6502_cpu_t* cpu_s){
             lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
             hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
             operand = (((hi << 8) | lo) + cpu_s->reg.x) % 65536;
+            if((lo + cpu_s->reg.x) > 0x00FF) cpu_s->page_crossing_flag = 1;
             cpu_s->reg.program_counter += 2;
             return operand;
         case ABY:
@@ -81,6 +82,7 @@ uint16_t _get_operand(z6502_cpu_t* cpu_s){
             lo = cpu_s->memory_ptr[cpu_s->reg.program_counter];
             hi = cpu_s->memory_ptr[cpu_s->reg.program_counter + 1];
             operand = (((hi << 8) | lo) + cpu_s->reg.y) % 65536;
+            if((lo + cpu_s->reg.y) > 0x00FF) cpu_s->page_crossing_flag = 1;
             cpu_s->reg.program_counter += 2;
             return operand;
         case IND:
@@ -104,6 +106,7 @@ uint16_t _get_operand(z6502_cpu_t* cpu_s){
             lo = cpu_s->memory_ptr[operand];
             hi = cpu_s->memory_ptr[(operand + 1) % 256];
             operand = ((hi << 8) | lo) + cpu_s->reg.y;
+            if((lo + cpu_s->reg.y) > 0x00FF) cpu_s->page_crossing_flag = 1;
             cpu_s->reg.program_counter++;
             return operand;
         default:
@@ -221,6 +224,10 @@ void _push_register_stack(uint8_t* mem, z6502_register_set_t* reg){
     reg->stack_pointer = (reg->stack_pointer - 1U) % 256;
 }
 
+int _check_page_crossing(uint16_t start_addr, uint16_t end_addr){
+    return ((start_addr & 0xFF00) == (end_addr & 0xFF00));
+}
+
 //*****************************************************************************
 // Instruction implementations
 //*****************************************************************************
@@ -234,6 +241,9 @@ void z6502_op_ADC(z6502_cpu_t* cpu_s){
     else{
         tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
 
     if(cpu_s->reg.processor_status.decimal_mode){
         /*Decimal mode*/
@@ -260,6 +270,10 @@ void z6502_op_AND(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.accumulator &= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
@@ -282,19 +296,25 @@ void z6502_op_ASL(z6502_cpu_t* cpu_s){
 void z6502_op_BCC(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.carry == 0U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BCS(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.carry == 1U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BEQ(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.zero == 1U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BIT(z6502_cpu_t* cpu_s){
@@ -306,19 +326,25 @@ void z6502_op_BIT(z6502_cpu_t* cpu_s){
 void z6502_op_BMI(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.negative == 1U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BNE(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.zero == 0U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BPL(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.negative == 0U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BRK(z6502_cpu_t* cpu_s){
@@ -333,13 +359,17 @@ void z6502_op_BRK(z6502_cpu_t* cpu_s){
 void z6502_op_BVC(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.overflow == 0U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_BVS(z6502_cpu_t* cpu_s){
     int8_t addr = _get_operand(cpu_s);
     if (cpu_s->reg.processor_status.overflow == 1U){
-        cpu_s->reg.program_counter = (cpu_s->reg.program_counter + addr) % 65536;
+        uint16_t tmp = (cpu_s->reg.program_counter + addr) % 65536;
+        cpu_s->ir_cycles += _check_page_crossing(cpu_s->reg.program_counter, tmp) + 1;
+        cpu_s->reg.program_counter = tmp;
     }
 }
 void z6502_op_CLC(z6502_cpu_t* cpu_s){
@@ -362,6 +392,10 @@ void z6502_op_CMP(z6502_cpu_t* cpu_s){
     else{
         tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     tmp = cpu_s->reg.accumulator - tmp;
     cpu_s->reg.processor_status.carry = (tmp >= 0)?1U:0U;
     cpu_s->reg.processor_status.zero = (tmp == 0)?1U:0U;
@@ -416,6 +450,10 @@ void z6502_op_EOR(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.accumulator ^= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
@@ -451,6 +489,10 @@ void z6502_op_LDA(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.accumulator = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
@@ -461,6 +503,10 @@ void z6502_op_LDX(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.x = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABY mode if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.x);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.x);
 }
@@ -471,6 +517,10 @@ void z6502_op_LDY(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.y = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX mode if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.y);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.y);
 }
@@ -500,6 +550,10 @@ void z6502_op_ORA(z6502_cpu_t* cpu_s){
     else{
         cpu_s->reg.accumulator |= cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
+
     _update_zero_flag(&cpu_s->reg, cpu_s->reg.accumulator);
     _update_negative_flag(&cpu_s->reg, cpu_s->reg.accumulator);
 }
@@ -575,6 +629,9 @@ void z6502_op_SBC(z6502_cpu_t* cpu_s){
     else{
         tmp = cpu_s->memory_ptr[_get_operand(cpu_s)];
     }
+
+    /*Only set in ABX, ABY and INY modes if page crossed*/
+    cpu_s->ir_cycles += cpu_s->page_crossing_flag;
 
     if(cpu_s->reg.processor_status.decimal_mode){
         /*Decimal mode*/
@@ -670,6 +727,8 @@ int z6502_step(z6502_cpu_t* cpu_s) {
     cpu_s->ir_addr = cpu_s->reg.program_counter;
     cpu_s->ir_opcode = cpu_s->memory_ptr[cpu_s->reg.program_counter];
     cpu_s->ir_mode = z6502_instruction_mode[cpu_s->ir_opcode];
+    cpu_s->ir_cycles = z6502_instruction_cycles[cpu_s->ir_opcode];
+    cpu_s->page_crossing_flag = 0;
     cpu_s->reg.program_counter++;
 
     /*Execute instruction*/

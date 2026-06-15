@@ -177,8 +177,8 @@ void emu_memory_monitor(uint8_t* memory_ptr, size_t memory_size){
 }
 
 void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag){
-    const char std_format_str[] = "PC:%04X NEXT:%04X A:%02X X:%02X Y:%02X SP:%02X NV-BDIZC:%d%d%d%d%d%d%d%d opcode:%02X (%s %s)\n";
-    const char json_format_str[] = "{ \"PC\": \"0x%04X\", \"NEXT\": \"0x%04X\", \"A\": \"0x%02X\", \"X\": \"0x%02X\", \"Y\": \"0x%02X\", \"SP\": \"0x%02X\", \"NV-BDIZC\": \"0b%d%d%d%d%d%d%d%d\", \"opcode\": \"0x%02X\", \"mnemonic\": \"%s\", \"addressing_mode\": \"%s\" }\n";
+    const char std_format_str[] = "PC:%04X NEXT:%04X A:%02X X:%02X Y:%02X SP:%02X NV-BDIZC:%d%d%d%d%d%d%d%d opcode:%02X (%s %s) cycles:%d\n";
+    const char json_format_str[] = "{ \"PC\": \"0x%04X\", \"NEXT\": \"0x%04X\", \"A\": \"0x%02X\", \"X\": \"0x%02X\", \"Y\": \"0x%02X\", \"SP\": \"0x%02X\", \"NV-BDIZC\": \"0b%d%d%d%d%d%d%d%d\", \"opcode\": \"0x%02X\", \"mnemonic\": \"%s\", \"addressing_mode\": \"%s\", \"cycles\":\"%d\" }\n";
 
     printf(json_flag?json_format_str:std_format_str,
            cpu_s->ir_addr,
@@ -197,6 +197,7 @@ void emu_cpuState_dump(z6502_cpu_t* cpu_s, uint8_t json_flag){
            cpu_s->reg.processor_status.carry,
            cpu_s->ir_opcode,
            z6502_get_instruction_mnemonic(cpu_s),
-           z6502_get_addressing_mode_str(cpu_s)
+           z6502_get_addressing_mode_str(cpu_s),
+           cpu_s->ir_cycles
            );
 }

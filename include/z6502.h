@@ -82,6 +82,10 @@ typedef struct
     uint8_t ir_opcode;
     uint16_t ir_addr;
     z6502_addressing_mode_t ir_mode;
+    int ir_cycles;
+
+    /*Misc. flag*/
+    uint8_t page_crossing_flag;
 } z6502_cpu_t;
 
 
