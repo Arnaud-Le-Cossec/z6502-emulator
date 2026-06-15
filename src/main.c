@@ -1,14 +1,16 @@
-/**
- *   ____         _            
- *  |_  /___ _ __| |_ _  _ _ _ 
- *   / // -_) '_ \ ' \ || | '_|
- *  /___\___| .__/_||_\_, |_|  
- *          |_|       |__/ Project 
- * 
- * [Zephyr DX82x Series Emulator]
- * (c)2025 - Written by Arnaud LE COSSEC
- * MIT Licence - see licence file
- */
+/*                       
+     _____ ___ ___ ___ ___ 
+    |__   |  _|  _|   |_  |     Z6502 CPU Emulator
+    |   __| . |_  | | |  _|     Copyright (C) 2026 - Arnaud LE COSSEC
+    |_____|___|___|___|___|     version 1.0.0
+                       
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the MIT License.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MIT License for more details.    
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
