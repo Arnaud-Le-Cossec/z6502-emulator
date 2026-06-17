@@ -4,6 +4,12 @@
 
 Another 6502 CPU instruction set simulator, written in C
 
+## Init & update submodules
+
+```bash
+git submodule update --init
+```
+
 ## Build
 
 1. Create a build directory:
