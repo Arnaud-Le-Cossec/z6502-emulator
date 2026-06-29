@@ -12,12 +12,27 @@
     MIT License for more details.    
 */
 
+// DEFINES ********************************************************************
+#define Z6502_USE_SYSTEM_BUS 1
+// ******************************************************************** DEFINES
+
+// INCLUDES *******************************************************************
+/*Std libs*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+/*Components*/
 #include "emulator_utility.h"
+#include "system_bus.h"
 #include "z6502.h"
+// ******************************************************************* INCLUDES
 
+// GLOBALS ********************************************************************
+system_bus_t bus_s;
+z6502_cpu_t cpu_s;
+// ******************************************************************** GLOBALS
+
+// MAIN ***********************************************************************
 int main(int argc,char ** argv) {
     int opt;
     int verbose_flag = 0;
@@ -85,9 +100,11 @@ int main(int argc,char ** argv) {
         exit(EXIT_FAILURE);
     }
 
-    /*Create components*/
-    z6502_cpu_t cpu_s;
-    z6502_init(&cpu_s, memory_space);
+    /*Init bus*/
+    system_bus_init(&bus_s, memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES);
+
+    /*Init components*/
+    z6502_init(&cpu_s, &bus_s);
 
     /*Reset CPU*/
     z6502_reset(&cpu_s);
@@ -127,3 +144,5 @@ int main(int argc,char ** argv) {
     free(memory_space);
     return 0;
 }
+
+// *********************************************************************** MAIN
