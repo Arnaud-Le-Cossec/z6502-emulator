@@ -1,3 +1,6 @@
 [submodule "lib/z6502-cpu-core"]
 	path = lib/z6502-cpu-core
 	url = https://github.com/Arnaud-Le-Cossec/z6502-cpu-core.git
+[submodule "lib/z6551-acia-core"]
+	path = lib/z6551-acia-core
+	url = https://github.com/Arnaud-Le-Cossec/z6551-acia-core.git
