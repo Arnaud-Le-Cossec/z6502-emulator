@@ -33,7 +33,7 @@ git submodule update --init
 ## Usage
 
 ```bash
-./z6502_emulator [-v] [-j] [-b] [-B] [-s] [-f frequency] ROM_file
+./z6502_emulator [-v] [-j] [-b] [-B] [-s] [-f frequency] [-m map] ROM_file
 ```
 
 * `-v` **Verbose:** Dump CPU status in the console
