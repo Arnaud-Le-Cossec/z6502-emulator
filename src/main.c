@@ -108,9 +108,11 @@ int main(int argc,char ** argv) {
     /*Init components*/
     //z6502_init_mem(&cpu_s, memory_space);
     z6502_init_bus(&cpu_gs, system_bus_z6502_read_clbk, system_bus_z6502_write_clbk);
+    z6551_init(&acia_gs);
 
     /*Reset CPU*/
     z6502_reset(&cpu_gs);
+    z6551_reset(&acia_gs);
 
     /*Emulation loop*/
     while(1){
@@ -121,6 +123,8 @@ int main(int argc,char ** argv) {
             free(memory_space);
             exit(EXIT_FAILURE);
         }
+
+        z6551_step(&acia_gs);
         
 
         if(verbose_flag){
