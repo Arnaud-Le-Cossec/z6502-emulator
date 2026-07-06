@@ -13,12 +13,18 @@
 // Prototypes
 //*****************************************************************************
 
+typedef enum {
+    MEMORY_MAP_64KB_RAM = 0,
+    MEMORY_MAP_64KB_RAM_PLUS_ACIA = 1
+} system_bus_memory_map_t;
+
 /*System bus structure*/
 typedef struct
 {   
     /*Memory*/
     uint8_t* memory_ptr;
     size_t memory_size;
+    system_bus_memory_map_t memory_map;
 
 } system_bus_t;
 
@@ -34,7 +40,7 @@ extern z6551_acia_t acia_gs;
 // Prototypes
 //*****************************************************************************
 
-void system_bus_init(system_bus_t* bus_s, uint8_t* memory_ptr, size_t memory_size);
+void system_bus_init(system_bus_t* bus_s, uint8_t* memory_ptr, size_t memory_size, system_bus_memory_map_t memory_map);
 
 uint8_t system_bus_z6502_read_clbk(z6502_cpu_t* cpu_s, uint16_t addr);
 void system_bus_z6502_write_clbk(z6502_cpu_t* cpu_s, uint16_t addr, uint8_t val);

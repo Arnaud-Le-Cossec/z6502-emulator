@@ -42,9 +42,13 @@ int main(int argc,char ** argv) {
     int stop_on_brk = 1; //Default: stop on BRK instruction
     int step_mode = 0;
     int clock_frequency = 1; //Default 1Hz
+    //Default   : 0 = 64KB RAM
+    //          : 1 = PERIPH @1F00..8000: (ACIA @1F00..1F03)
+    int memory_map = 0; 
+    
 
     /*Parse command line options*/
-    while ((opt = getopt(argc, argv, "vjbBsf:")) != -1) {
+    while ((opt = getopt(argc, argv, "vjbBsf:m:")) != -1) {
         switch (opt) {
             case 'v':
                 verbose_flag = 1;
@@ -68,14 +72,22 @@ int main(int argc,char ** argv) {
                     exit(EXIT_FAILURE);
                 }
                 break;
+            case 'm':
+                memory_map = strtol(optarg, NULL, 10);
+                if(memory_map < 0 || memory_map > 1){
+                    fprintf(stderr, "Invalid memory map option\n");
+                    exit(EXIT_FAILURE);
+                }
+                break;
             default:
-                fprintf(stderr, "Usage: %s [-v] [-j] [-s] [-f frequency] ROM_file\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-v] [-j] [-s] [-f frequency] [-m map] ROM_file\n", argv[0]);
                 fprintf(stderr, "  -v : Verbose mode (dumps CPU state after each instruction)\n");
                 fprintf(stderr, "  -j : Output CPU state in JSON format (only with -v)\n");
                 fprintf(stderr, "  -b : Stop on BRK instruction (default)\n");
                 fprintf(stderr, "  -B : Continue execution on BRK instruction\n");
                 fprintf(stderr, "  -s : Step mode (waits for user input after each instruction)\n");
                 fprintf(stderr, "  -f frequency : Set clock frequency in Hz (default: 1Hz)\n");
+                fprintf(stderr, "  -m map : Set memory map (0 = 64KB RAM, 1 = + ACIA @1F00..1F03)\n");
                 exit(EXIT_FAILURE);
         }
     }
@@ -103,7 +115,7 @@ int main(int argc,char ** argv) {
     }
 
     /*Init bus*/
-    system_bus_init(&bus_gs, memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES);
+    system_bus_init(&bus_gs, memory_space, (size_t)Z6502_MAX_MEMORY_SIZE_BYTES, memory_map);
 
     /*Init components*/
     //z6502_init_mem(&cpu_s, memory_space);
