@@ -43,7 +43,7 @@ int main(int argc,char ** argv) {
     int step_mode = 0;
     int clock_frequency = 1; //Default 1Hz
     //Default   : 0 = 64KB RAM
-    //          : 1 = PERIPH @1F00..8000: (ACIA @1F00..1F03)
+    //          : 1 = PERIPH @7F00..8000: (ACIA @7F00..7F03)
     int memory_map = 0; 
     
 
@@ -87,7 +87,7 @@ int main(int argc,char ** argv) {
                 fprintf(stderr, "  -B : Continue execution on BRK instruction\n");
                 fprintf(stderr, "  -s : Step mode (waits for user input after each instruction)\n");
                 fprintf(stderr, "  -f frequency : Set clock frequency in Hz (default: 1Hz)\n");
-                fprintf(stderr, "  -m map : Set memory map (0 = 64KB RAM, 1 = + ACIA @1F00..1F03)\n");
+                fprintf(stderr, "  -m map : Set memory map (0 = 64KB RAM, 1 = + ACIA @7F00..7F03)\n");
                 exit(EXIT_FAILURE);
         }
     }

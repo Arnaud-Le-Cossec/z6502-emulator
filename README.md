@@ -42,7 +42,10 @@ git submodule update --init
 * `-B` **No-stop-on-brk:** Continue execution on BRK instruction
 * `-s` **Step:** Run CPU in step mode, waiting user input between each instruction. If ommited, clock mode is used
 * `-f frequency` **Frequency:** Specify the speed of the CPU in clock mode (Hz). Default is 1 Hz. Set to 0 Hz for free running
-* `ROM_File` **Program file** Path to the executable file (PseudoBin format)
+* `-m map` **Memory-map:** Specify the memory map config number:
+   - `0`: 64KB RAM (*default*)
+   - `1`: 64KB RAM - 256B Peripheral @7F00..7FFF (inc. 6551 ACIA @7F00..7F03) 
+* `ROM_File` **Program file** Path to the executable file
 
 ### Example:
 
